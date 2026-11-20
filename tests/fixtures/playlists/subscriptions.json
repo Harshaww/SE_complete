@@ -1,0 +1,26 @@
+{
+  "items": [
+    {
+      "channel_id": "UCuAXFkgsw1L7xaCfnd5JJOw",
+      "title": "RickAstleyVEVO",
+      "description": "The official YouTube channel of Rick Astley.",
+      "keywords": ["rick astley", "pop", "80s"],
+      "topic_categories": ["Music"],
+      "language": "en",
+      "subscriber_count": 3800000,
+      "upload_cadence_per_month": 0.5,
+      "recent_upload_titles": ["Never Gonna Give You Up", "Together Forever"]
+    },
+    {
+      "channel_id": "UCWv7vMbMWH4-V0ZXdmDpPBA",
+      "title": "Programming with Mosh",
+      "description": "Learn to code fast.",
+      "keywords": ["programming", "python", "javascript"],
+      "topic_categories": ["Technology", "Education"],
+      "language": "en",
+      "subscriber_count": 4200000,
+      "upload_cadence_per_month": 3.0,
+      "recent_upload_titles": ["Python Tutorial", "JavaScript for Beginners"]
+    }
+  ]
+}
