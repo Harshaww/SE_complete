@@ -44,7 +44,7 @@ oauth_manager.request_additional_scope("https://www.googleapis.com/auth/youtube"
 
 The re-authorization preserves any pending proposals: `proposal_store` is SQLite-backed (ADR-E), so proposals survive the token refresh round-trip.
 
-### 3. Token Storage (NFR-SE-2)
+### 3. Token Storage (NFR-SE-3, NFR-SE-2)
 
 Tokens are **never** stored in source code, logs, or fixtures.
 

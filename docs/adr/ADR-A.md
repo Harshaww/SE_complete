@@ -3,7 +3,7 @@
 **Status:** Accepted  
 **Date:** 2026-11-09  
 **Deciders:** SegmentationFault team  
-**SRS refs:** FR-4.6, FR-4.7, NFR-SA-1, NFR-SE-3, BR-2, CON-6, AS-2
+**SRS refs:** FR-4.6, FR-4.7, NFR-SA-1, NFR-SE-5, BR-2, CON-6, AS-2
 **Brain notes:** [Cerebra overview](../../brain/projects/cerebra/overview.md)  
 
 ---

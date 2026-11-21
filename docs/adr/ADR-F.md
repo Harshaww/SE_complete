@@ -36,7 +36,8 @@ These record where the implementation refines or departs from the earlier ADRs.
    end over real stdio with mcp 1.30.0 (initialize + tools/list, stdout carries JSON only).
 10. **State machine matches SRS Appendix B.3.** `PARTIAL` may only go to `CREATED`. The earlier
     `PARTIAL -> FAILED` edge was never used by production code and is removed; an unrecoverable
-    partial proposal stays `PARTIAL` and is reported by `cerebra-cli pending`.
+    partial proposal stays `PARTIAL` and is reported by `cerebra-cli pending`. Decision
+    2026-11-22: removal confirmed.
 11. **NFR-QU-1 is met by actual cost, not by reservation.** A typical FR-1 request costs about 104
     units and a typical proposal about 102 (tests/integration/test_privacy_and_budgets.py). The
     quota reservation made before the first call is deliberately a worst-case upper bound
@@ -45,7 +46,11 @@ These record where the implementation refines or departs from the earlier ADRs.
     is burned and before any state change, so the proposal and its approval stay usable after
     re-authorisation (tested). Residual case: if Google rejects an already-issued access token
     with 401 in the middle of `playlists.insert`, nothing was written but the proposal is marked
-    `FAILED` and the user must propose and approve again.
+    `FAILED` and the user must propose and approve again. Decision 2026-11-22: kept. Approvals
+    are single-use (item 1) and already consumed at that point; reviving the proposal would
+    mean re-arming a spent approval, which weakens FR-4.6/NFR-SA-1. The case is rare
+    (revocation inside the access-token lifetime) and nothing was written, so the cost is one
+    re-propose.
 13. **Cache retention and clear command (NFR-PV-2).** `CEREBRA_CACHE_RETAIN_DAYS` now caps every
     cache TTL, and `cerebra-cli clear-cache` deletes all cached YouTube data.
 14. **Headless runs.** `CEREBRA_REFRESH_TOKEN` (+ `CEREBRA_REFRESH_TOKEN_SCOPES`) supplies
