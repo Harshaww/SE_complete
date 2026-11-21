@@ -59,13 +59,27 @@ class SQLiteDB:
                     id          INTEGER PRIMARY KEY AUTOINCREMENT,
                     timestamp   TEXT NOT NULL,
                     proposal_id TEXT NOT NULL,
-                    playlist_id TEXT NOT NULL
+                    playlist_id TEXT NOT NULL,
+                    event       TEXT NOT NULL DEFAULT 'created'
+                );
+                CREATE TABLE IF NOT EXISTS approvals (
+                    proposal_id TEXT PRIMARY KEY,
+                    digest      TEXT NOT NULL,
+                    account_id  TEXT NOT NULL,
+                    approved_at TEXT NOT NULL,
+                    used        INTEGER NOT NULL DEFAULT 0
                 );
                 CREATE TABLE IF NOT EXISTS quota_state (
                     id    INTEGER PRIMARY KEY CHECK (id = 1),
                     state TEXT NOT NULL
                 );
             """)
+            # Migration: databases created before Phase 4 lack audit_log.event
+            cols = {r["name"] for r in conn.execute("PRAGMA table_info(audit_log)")}
+            if "event" not in cols:
+                conn.execute(
+                    "ALTER TABLE audit_log ADD COLUMN event TEXT NOT NULL DEFAULT 'created'"
+                )
             conn.commit()
             conn.close()
 
@@ -160,6 +174,9 @@ class SQLiteProposalStore:
             "playlist_id": p.playlist_id,
             "playlist_url": p.playlist_url,
             "failed_item_ids": p.failed_item_ids,
+            "item_states": p.item_states,
+            "ambiguous": p.ambiguous,
+            "account_id": p.account_id,
         }
 
     def _dict_to_proposal(self, d: dict[str, object]) -> PlaylistProposal:
@@ -189,6 +206,9 @@ class SQLiteProposalStore:
             playlist_id=d.get("playlist_id"),  # type: ignore[arg-type]
             playlist_url=d.get("playlist_url"),  # type: ignore[arg-type]
             failed_item_ids=list(d.get("failed_item_ids", [])),  # type: ignore[arg-type]
+            item_states=dict(d.get("item_states", {})),  # type: ignore[arg-type]
+            ambiguous=bool(d.get("ambiguous", False)),
+            account_id=str(d.get("account_id", "")),
         )
 
 
@@ -252,6 +272,63 @@ class SQLiteAuditLog:
             "INSERT INTO audit_log (timestamp, proposal_id, playlist_id) VALUES (?, ?, ?)",
             (timestamp, proposal_id, playlist_id),
         )
+
+
+    def log_event(
+        self, proposal_id: str, playlist_id: str, event: str, timestamp: str
+    ) -> None:
+        self._db.execute(
+            "INSERT INTO audit_log (timestamp, proposal_id, playlist_id, event) "
+            "VALUES (?, ?, ?, ?)",
+            (timestamp, proposal_id, playlist_id, event),
+        )
+
+
+class SQLiteApprovalStore:
+    """ApprovalStore backed by SQLite (ADR-A §3). Written only by ``cerebra-cli approve``."""
+
+    def __init__(self, db: SQLiteDB) -> None:
+        self._db = db
+
+    def record(
+        self, proposal_id: str, digest: str, account_id: str, approved_at: str
+    ) -> None:
+        self._db.execute(
+            "INSERT OR REPLACE INTO approvals "
+            "(proposal_id, digest, account_id, approved_at, used) VALUES (?, ?, ?, ?, 0)",
+            (proposal_id, digest, account_id, approved_at),
+        )
+
+    def get(self, proposal_id: str) -> Optional[dict[str, str]]:
+        rows = self._db.execute(
+            "SELECT proposal_id, digest, account_id, approved_at, used "
+            "FROM approvals WHERE proposal_id = ?",
+            (proposal_id,),
+        )
+        if not rows:
+            return None
+        r = rows[0]
+        return {
+            "proposal_id": r["proposal_id"],
+            "digest": r["digest"],
+            "account_id": r["account_id"],
+            "approved_at": r["approved_at"],
+            "used": str(r["used"]),
+        }
+
+    def consume(self, proposal_id: str) -> bool:
+        # Single atomic UPDATE: only one caller can flip used 0 -> 1
+        with self._db._lock:  # noqa: SLF001 - same module, keeps check+update atomic
+            conn = self._db._connect()  # noqa: SLF001
+            try:
+                cur = conn.execute(
+                    "UPDATE approvals SET used = 1 WHERE proposal_id = ? AND used = 0",
+                    (proposal_id,),
+                )
+                conn.commit()
+                return cur.rowcount == 1
+            finally:
+                conn.close()
 
 
 class SQLiteQuotaStore:

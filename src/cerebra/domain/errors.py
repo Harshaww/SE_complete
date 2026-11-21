@@ -188,3 +188,23 @@ def transient_error(detail: str) -> CerebraError:
         retryable=True,
         suggested_action="The request will be retried automatically. If this persists, try again later.",
     )
+
+
+def insufficient_scope(required: str) -> CerebraError:
+    return CerebraError(
+        ErrorCode.INSUFFICIENT_SCOPE,
+        f"The current YouTube authorisation does not include the required scope: {required}.",
+        suggested_action=(
+            "Run `cerebra-cli login --write` in your terminal to grant write access, then retry."
+        ),
+    )
+
+
+def youtube_api_error(status: int, reason: str) -> CerebraError:
+    """Non-retryable YouTube API failure (4xx other than the mapped cases)."""
+    return CerebraError(
+        ErrorCode.YOUTUBE_API_ERROR,
+        f"The YouTube API returned HTTP {status} ({reason or 'unknown reason'}).",
+        retryable=False,
+        suggested_action="Check the request parameters. If this persists, report it.",
+    )

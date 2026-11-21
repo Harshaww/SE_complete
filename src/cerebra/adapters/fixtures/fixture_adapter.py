@@ -183,6 +183,10 @@ class FixturePlaylistWriter:
         self.fail_on_create: bool = False
         self.fail_on_item_ids: set[str] = set()
 
+    async def ensure_write_access(self) -> None:
+        """Fixture mode has no OAuth; write access is always 'available'."""
+        return None
+
     async def create_playlist(
         self, title: str, description: str, privacy_status: str
     ) -> str:

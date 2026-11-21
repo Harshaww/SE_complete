@@ -67,6 +67,9 @@ class QuotaLedger:
     No global state.
     """
 
+    #: Reservations are real holds on this ledger (see AdapterMeteredQuota for the live path).
+    holds_reservations = True
+
     def __init__(
         self,
         general_budget: int = DEFAULT_DAILY_BUDGET,

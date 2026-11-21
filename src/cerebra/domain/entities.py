@@ -210,6 +210,13 @@ class PlaylistProposal:
     playlist_id: Optional[str] = None
     playlist_url: Optional[str] = None
     failed_item_ids: list[str] = field(default_factory=list)
+    # ADR-C: per-item write state (video_id -> PENDING | INSERTED | FAILED), persisted
+    # BEFORE each write so a crash can be reconciled against remote state.
+    item_states: dict[str, str] = field(default_factory=dict)
+    # ADR-C §6: True when a write ended in an ambiguous failure (5xx / timeout).
+    ambiguous: bool = False
+    # ADR-A §2: account the proposal was bound to (empty in fixture mode).
+    account_id: str = ""
 
     @property
     def total_actual_seconds(self) -> int:

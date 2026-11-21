@@ -95,6 +95,15 @@ class UserLibraryReader(Protocol):
 class PlaylistWriter(Protocol):
     """Write operations — playlists.insert + playlistItems.insert ONLY (NFR-SA-2)."""
 
+    async def ensure_write_access(self) -> None:
+        """Make sure write credentials are available BEFORE any write (FR-5.1, ADR-D).
+
+        The live adapter upgrades ``youtube.readonly`` to ``youtube`` here (incremental
+        authorisation). Raises CerebraError (AUTH_REQUIRED / INSUFFICIENT_SCOPE /
+        AUTH_EXPIRED) without having made any write call.
+        """
+        ...
+
     async def create_playlist(
         self,
         title: str,
@@ -180,6 +189,33 @@ class AuditLog(Protocol):
         playlist_id: str,
         timestamp: str,
     ) -> None: ...
+
+    def log_event(
+        self,
+        proposal_id: str,
+        playlist_id: str,
+        event: str,
+        timestamp: str,
+    ) -> None:
+        """Log a write-lifecycle event (e.g. ``ambiguous_failure``, ``recovered``; ADR-C §6)."""
+        ...
+
+
+@runtime_checkable
+class ApprovalStore(Protocol):
+    """Out-of-band human approvals written by ``cerebra-cli approve`` (ADR-A §3).
+
+    The MCP client can never write here: only the local CLI, which requires an
+    interactive terminal, records approvals.
+    """
+
+    def record(
+        self, proposal_id: str, digest: str, account_id: str, approved_at: str
+    ) -> None: ...
+    def get(self, proposal_id: str) -> Optional[dict[str, str]]: ...
+    def consume(self, proposal_id: str) -> bool:
+        """Atomically mark an approval as used. Returns False if absent/already used."""
+        ...
 
 
 # ── Aggregate VideoProvider (for SRS traceability, FR-5.17) ──────────────────

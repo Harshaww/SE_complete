@@ -31,8 +31,10 @@ from cerebra.mcp_tools.validation import (
 
 def build_server() -> Server:
     cfg = get_config()
-    container = build_container(cfg)
+    # NFR-TE-1: CI sets CEREBRA_USE_FIXTURES=1; production uses the live adapter (Phase 3).
+    container = build_container(cfg, use_fixtures=cfg.use_fixtures)
     app = Server("cerebra")
+    _warn_pending_recoveries(container)
 
     # ── Tool registration (FR-5.12) ──────────────────────────────────────────
 
@@ -205,8 +207,13 @@ def build_server() -> Server:
         except CerebraError as e:
             import json
             return [TextContent(type="text", text=json.dumps(e.to_dict(), indent=2))]
-        except Exception as e:
-            return [TextContent(type="text", text=f'{{"error": {{"code": "INTERNAL_ERROR", "message": "{e}", "retryable": false, "suggested_action": "Report this bug."}}}}')]
+        except Exception as e:  # noqa: BLE001 - last-resort uniform error (FR-5.15)
+            import json
+            payload = {"error": {
+                "code": "INTERNAL_ERROR", "message": type(e).__name__,
+                "retryable": False, "suggested_action": "Report this bug.",
+            }}
+            return [TextContent(type="text", text=json.dumps(payload))]
 
     # ── Resources (FR-5.13) ──────────────────────────────────────────────────
 
@@ -233,7 +240,10 @@ def build_server() -> Server:
         if str(uri) == "cerebra://quota_status":
             return json.dumps(container.quota.status(), indent=2)
         if str(uri) == "cerebra://auth_status":
-            return json.dumps({"authenticated": container.is_authenticated}, indent=2)
+            out: dict[str, Any] = {"authenticated": bool(container.is_authenticated)}
+            if getattr(container, "oauth", None) is not None:
+                out.update(container.oauth.status())  # scopes/expiry hints; never tokens
+            return json.dumps(out, indent=2)
         return json.dumps({"error": "unknown resource"})
 
     return app
@@ -319,6 +329,27 @@ async def _dispatch(
             ErrorCode.INVALID_ARGUMENT,
             f"Unknown tool: {repr(name)}",
             suggested_action="Check the tool name.",
+        )
+
+
+def _warn_pending_recoveries(container: Any) -> None:
+    """ADR-C §3: surface PARTIAL proposals at startup. stderr only (stdout is MCP JSON).
+
+    Startup performs NO writes: finishing an interrupted write is an explicit human action
+    (`cerebra-cli recover <id>`), which first reads remote state.
+    """
+    recover = getattr(container, "recover", None)
+    if recover is None:
+        return
+    try:
+        pending = recover.pending()
+    except Exception:  # noqa: BLE001 - never block startup on this
+        return
+    for p in pending:
+        print(
+            f"cerebra: proposal {p.proposal_id} is {p.state.value}; "
+            f"run `cerebra-cli recover {p.proposal_id}`",
+            file=sys.stderr,
         )
 
 

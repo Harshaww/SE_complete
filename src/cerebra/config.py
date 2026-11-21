@@ -9,6 +9,20 @@ from pathlib import Path
 _DEFAULT_DATA_DIR = Path.home() / ".cerebra"
 
 
+def _default_token_file() -> Path:
+    """Owner-only fallback token file (ADR-D §3): ~/.config/cerebra/token.json."""
+    base = os.environ.get("XDG_CONFIG_HOME")
+    root = Path(base) if base else Path.home() / ".config"
+    return root / "cerebra" / "token.json"
+
+
+def _env_flag(name: str, default: bool = False) -> bool:
+    raw = os.environ.get(name)
+    if raw is None:
+        return default
+    return raw.strip().lower() in ("1", "true", "yes", "on")
+
+
 @dataclass
 class Config:
     """All configuration in one place. Read from env vars; no secrets in code (FR-5.2)."""
@@ -46,6 +60,27 @@ class Config:
         default_factory=lambda: os.environ.get("GOOGLE_CLIENT_SECRET", "")
     )
 
+    # Optional API key for PUBLIC reads when no OAuth token exists (env only, never in code).
+    youtube_api_key: str = field(
+        default_factory=lambda: os.environ.get("CEREBRA_YOUTUBE_API_KEY", "")
+    )
+
+    # Adapter selection (NFR-TE-1: CI sets CEREBRA_USE_FIXTURES=1; live is the default).
+    use_fixtures: bool = field(default_factory=lambda: _env_flag("CEREBRA_USE_FIXTURES", False))
+
+    # Token storage (ADR-D §3): OS keyring preferred, owner-only file fallback.
+    token_file: Path = field(
+        default_factory=lambda: Path(
+            os.environ.get("CEREBRA_TOKEN_FILE", str(_default_token_file()))
+        )
+    )
+    use_keyring: bool = field(default_factory=lambda: _env_flag("CEREBRA_USE_KEYRING", True))
+
+    # Allow the server to start the browser consent flow itself when create_playlist
+    # needs the `youtube` scope (FR-5.1). If False, it fails with INSUFFICIENT_SCOPE and
+    # tells the human to run `cerebra-cli login --write`.
+    interactive_auth: bool = field(default_factory=lambda: _env_flag("CEREBRA_INTERACTIVE_AUTH", True))
+
     # Storage
     data_dir: Path = field(
         default_factory=lambda: Path(
@@ -68,7 +103,7 @@ class Config:
 
     @property
     def token_path(self) -> Path:
-        return self.data_dir / "token.json"
+        return self.token_file
 
     def ensure_data_dir(self) -> None:
         self.data_dir.mkdir(parents=True, exist_ok=True)

@@ -141,3 +141,20 @@ def sample_video():
 @pytest.fixture
 def sample_channel():
     return make_channel()
+
+
+@pytest.fixture(autouse=True)
+def _ensure_event_loop():
+    """Several suites use asyncio.get_event_loop().run_until_complete(...). Code under test such
+    as the CLI legitimately calls asyncio.run(), which leaves *no* current loop behind; restore
+    one so test order never matters."""
+    import asyncio
+    import warnings
+
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore", DeprecationWarning)
+        try:
+            asyncio.get_event_loop_policy().get_event_loop()
+        except RuntimeError:
+            asyncio.set_event_loop(asyncio.new_event_loop())
+    yield
