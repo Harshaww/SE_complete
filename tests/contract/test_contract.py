@@ -81,6 +81,7 @@ class VideoReaderContractTests:
         assert isinstance(results, list)
 
 
+# mark: FR-5.17, CON-6, NFR-MA-1
 class TestFixtureVideoReaderContract(VideoReaderContractTests):
     """Run contract suite against fixture adapter."""
 
@@ -111,6 +112,7 @@ class PlaylistWriterContractTests:
         asyncio.get_event_loop().run_until_complete(writer.add_playlist_item(pid, "dQw4w9WgXcQ", 0))
 
 
+# mark: FR-5.17, CON-6, NFR-MA-1
 class TestFixturePlaylistWriterContract(PlaylistWriterContractTests):
     @pytest.fixture
     def writer(self):

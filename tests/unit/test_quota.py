@@ -3,6 +3,7 @@
 from cerebra.domain.quota import QUOTA_COSTS, QuotaLedger
 
 
+# mark: FR-5.7, FR-5.8, BR-5
 class TestQuotaLedger:
     def test_initial_remaining_full(self):
         q = QuotaLedger(general_budget=10000, search_budget=100)
@@ -96,6 +97,7 @@ class TestQuotaLedger:
         assert q.general_remaining >= 0
 
 
+# mark: FR-5.6
 class TestQuotaCosts:
     def test_all_expected_methods_present(self):
         expected = [

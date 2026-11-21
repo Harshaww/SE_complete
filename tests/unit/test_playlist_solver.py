@@ -18,6 +18,7 @@ def _make_videos(specs):
     ]
 
 
+# mark: FR-4.2, FR-4.3
 class TestSolvePlaylist:
     def test_basic_selection(self):
         videos = _make_videos(

@@ -19,6 +19,7 @@ def _make_config(tmp_path):
     return cfg
 
 
+# mark: TR-3, FR-1.6, FR-5.12
 class TestMCPFindSimilarVideos:
     """FR-1: Similarity Discovery via MCP interface."""
 
@@ -56,6 +57,7 @@ class TestMCPFindSimilarVideos:
         assert exc.value.code == ErrorCode.QUOTA_BUDGET_EXCEEDED
 
 
+# mark: TR-3, FR-2.1, FR-2.5
 class TestMCPRecommend:
     """FR-2: Recommendations."""
 
@@ -116,6 +118,7 @@ class TestMCPRecommend:
         assert "not_watch_history" in result["note"].lower() or "not" in result["note"].lower()
 
 
+# mark: TR-3, FR-3.1, FR-3.7
 class TestMCPAnalyse:
     """FR-3: Engagement Analysis."""
 
@@ -171,6 +174,7 @@ class TestMCPAnalyse:
         assert "empty_explanation" in result or "top_channels" in result
 
 
+# mark: TR-3, FR-4.4, FR-4.5
 class TestMCPProposePlaylst:
     """FR-4: Playlist Creation — propose phase."""
 
@@ -242,6 +246,7 @@ class TestMCPProposePlaylst:
         assert exc.value.code == ErrorCode.MISSING_CONSTRAINT
 
 
+# mark: FR-5.15, NFR-US-1
 class TestUniformErrors:
     """FR-5.15: errors in uniform structure (code, message, retryable, action)."""
 

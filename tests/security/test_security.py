@@ -13,6 +13,7 @@ from cerebra.domain.errors import ErrorCode
 from cerebra.mcp_tools.validation import validate_digest, validate_proposal_id
 
 
+# mark: FR-4.6, FR-4.7, NFR-SA-1, BR-2
 class TestApprovalProvenance:
     """ADR-A: approval must be bound to proposal_id + digest; agent-generated approval rejected."""
 
@@ -183,6 +184,7 @@ class TestApprovalProvenance:
         assert exc.value.code == ErrorCode.PROPOSAL_NOT_FOUND
 
 
+# mark: NFR-SE-4, FR-5.14
 class TestInputSecurity:
     """NFR-SE-4: all parameters validated with strict patterns."""
 
@@ -217,6 +219,7 @@ class TestInputSecurity:
             validate_topic(injection)
 
 
+# mark: FR-4.8
 class TestAuditLog:
     """FR-4.8: audit log contains only time + proposal_id + playlist_id."""
 
@@ -236,6 +239,7 @@ class TestAuditLog:
         assert not columns & {"email", "user_id", "title"}
 
 
+# mark: NFR-SE-2, NFR-PV-1
 class TestNoSecretsInFixtures:
     """NFR-PV-1, NFR-SE-2: fixtures contain no real user data."""
 

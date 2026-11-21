@@ -16,6 +16,7 @@ from cerebra.domain.scoring import (
 from tests.conftest import make_channel, make_video
 
 
+# mark: FR-1.5
 class TestWeights:
     def test_weights_sum_to_one(self):
         assert math.isclose(sum(_WEIGHTS), 1.0, rel_tol=1e-9)
@@ -27,6 +28,7 @@ class TestWeights:
         assert W_TFIDF > W_CATEGORY + W_CHANNEL + W_LANGUAGE + W_DURATION_BAND
 
 
+# mark: FR-1.5, FR-1.6, FR-1.8, FR-1.9, BR-4
 class TestRankVideos:
     def test_excludes_seed(self):
         seed = make_video(video_id="seed01ABCDE")
@@ -90,6 +92,7 @@ class TestRankVideos:
         assert same_score >= diff_score
 
 
+# mark: FR-1.5, FR-1.6
 class TestRankChannels:
     def test_excludes_seed(self):
         seed = make_channel(channel_id="UCuAXFkgsw1L7xaCfnd5JJOw")
@@ -104,6 +107,7 @@ class TestRankChannels:
             assert 0.0 <= r.score <= 1.0
 
 
+# mark: FR-1.5
 class TestCosineSimilarityTexts:
     def test_identical_texts_near_one(self):
         score = cosine_similarity_texts("python machine learning", "python machine learning")

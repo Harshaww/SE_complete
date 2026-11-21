@@ -62,6 +62,7 @@ def _make_full_fixture_reader():
 # ── FindSimilarUseCase coverage ───────────────────────────────────────────────
 
 
+# mark: FR-1.4, FR-1.8, FR-5.9
 class TestFindSimilarCoverage:
     """Cover find_similar application branches (FR-1)."""
 
@@ -149,6 +150,7 @@ class TestFindSimilarCoverage:
 # ── AnalyseEngagementUseCase coverage ────────────────────────────────────────
 
 
+# mark: FR-3.2, FR-3.3, FR-3.8
 class TestAnalyseCoverage:
     """Cover analyse application branches (FR-3)."""
 
@@ -228,6 +230,7 @@ class TestAnalyseCoverage:
 # ── RecommendVideosUseCase coverage ──────────────────────────────────────────
 
 
+# mark: FR-2.2, FR-2.4, FR-2.6
 class TestRecommendCoverage:
     """Cover recommend application branches (FR-2)."""
 

@@ -6,6 +6,7 @@ from cerebra.domain.entities import ProposalState
 from cerebra.domain.state_machine import StateMachineError, transition
 
 
+# mark: FR-4.7, FR-4.13
 class TestProposalStateMachine:
     # Valid transitions per SRS B.3
     @pytest.mark.parametrize(

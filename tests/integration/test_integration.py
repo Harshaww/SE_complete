@@ -13,6 +13,7 @@ from cerebra.infrastructure.persistence.sqlite_stores import (
 )
 
 
+# mark: FR-5.7, FR-5.8
 class TestQuotaLedgerIntegration:
     def test_reserve_consume_release_cycle(self, quota):
         # Reserve
@@ -52,6 +53,7 @@ class TestQuotaLedgerIntegration:
         assert q.general_remaining >= 0
 
 
+# mark: FR-5.9, NFR-PV-2, NFR-PF-5
 class TestCacheIntegration:
     def test_set_get_hit(self, cache):
         cache.set("key1", {"data": 42}, ttl_seconds=300)
@@ -87,6 +89,7 @@ class TestCacheIntegration:
         assert stats["active_entries"] <= 5
 
 
+# mark: FR-4.5
 class TestProposalStoreIntegration:
     def test_save_load_round_trip(self, proposal_store):
         pid = str(uuid.uuid4())
@@ -137,6 +140,7 @@ class TestProposalStoreIntegration:
         assert result is None
 
 
+# mark: FR-4.13
 class TestPartialCreationRecovery:
     """FR-4.13: partial creation recoverable; ADR-C: idempotency."""
 

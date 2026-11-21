@@ -64,6 +64,7 @@ _CANDIDATES = [
 _EXPECTED_ORDER = ["goldA000001", "goldB000002", "goldC000003", "goldD000004"]
 
 
+# mark: FR-1.5, FR-1.9
 class TestGoldenRanking:
     def test_ranking_matches_golden_snapshot(self):
         """FR-1.9: identical input → identical output on every run."""
