@@ -11,6 +11,7 @@ import sys
 from typing import Any
 
 from mcp.server import Server
+from mcp.server.lowlevel.helper_types import ReadResourceContents
 from mcp.server.stdio import stdio_server
 from mcp.types import Resource, TextContent, Tool
 
@@ -255,17 +256,24 @@ def build_server() -> Server:
         ]
 
     @app.read_resource()
-    async def read_resource(uri: str) -> str:
+    async def read_resource(uri: str) -> list[ReadResourceContents]:
         import json
 
+        def _json(payload: Any) -> list[ReadResourceContents]:
+            return [
+                ReadResourceContents(
+                    content=json.dumps(payload, indent=2), mime_type="application/json"
+                )
+            ]
+
         if str(uri) == "cerebra://quota_status":
-            return json.dumps(container.quota.status(), indent=2)
+            return _json(container.quota.status())
         if str(uri) == "cerebra://auth_status":
             out: dict[str, Any] = {"authenticated": bool(container.is_authenticated)}
             if getattr(container, "oauth", None) is not None:
                 out.update(container.oauth.status())  # scopes/expiry hints; never tokens
-            return json.dumps(out, indent=2)
-        return json.dumps({"error": "unknown resource"})
+            return _json(out)
+        return _json({"error": "unknown resource"})
 
     return app
 
