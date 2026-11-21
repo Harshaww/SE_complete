@@ -7,6 +7,7 @@ Validates every skill SKILL.md:
 
 Exits 0 on success, 1 on any error.
 """
+
 from __future__ import annotations
 
 import sys
@@ -14,6 +15,7 @@ from pathlib import Path
 
 try:
     import yaml  # type: ignore[import]
+
     YAML_AVAILABLE = True
 except ImportError:
     YAML_AVAILABLE = False

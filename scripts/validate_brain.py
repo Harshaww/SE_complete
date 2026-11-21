@@ -8,11 +8,11 @@ Validates the brain/ PARA vault:
 
 Exits 0 on success, 1 on any error.
 """
+
 from __future__ import annotations
 
 import sys
 from pathlib import Path
-
 
 REQUIRED_FILES = [
     "index.md",

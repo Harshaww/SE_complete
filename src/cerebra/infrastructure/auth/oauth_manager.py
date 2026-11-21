@@ -131,7 +131,7 @@ class OAuthManager:
         if not data:
             return None
         value = data.get("authorised_at")
-        return float(value) if isinstance(value, (int, float)) else None
+        return float(value) if isinstance(value, int | float) else None
 
     def seconds_until_testing_expiry(self) -> float | None:
         """Estimated seconds before a Testing-mode refresh token expires (CON-3), else None."""
@@ -204,7 +204,7 @@ class OAuthManager:
     def _classify_refresh_failure(self, exc: Exception) -> CerebraError:
         from google.auth.exceptions import RefreshError, TransportError
 
-        if isinstance(exc, (TransportError, ConnectionError, TimeoutError)):
+        if isinstance(exc, TransportError | ConnectionError | TimeoutError):
             # Network problem, NOT an expired grant: do not tell the user to re-login.
             return transient_error("could not reach Google to refresh the access token")
         if isinstance(exc, RefreshError):

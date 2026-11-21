@@ -205,7 +205,7 @@ class LiveYouTubeAdapter:
                 return transient_error(f"HTTP {status} {reason}".strip()), True
             return youtube_api_error(status, reason), True
         if isinstance(
-            exc, (TimeoutError, socket.timeout, ConnectionError, ssl.SSLError, OSError)
+            exc, TimeoutError | socket.timeout | ConnectionError | ssl.SSLError | OSError
         ) or type(exc).__name__ in ("HttpLib2Error", "ServerNotFoundError"):
             return transient_error(f"network failure ({type(exc).__name__})"), True
         return transient_error(f"unexpected {type(exc).__name__}"), True

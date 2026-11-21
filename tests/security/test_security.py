@@ -224,7 +224,6 @@ class TestAuditLog:
     """FR-4.8: audit log contains only time + proposal_id + playlist_id."""
 
     def test_audit_log_records_only_allowed_fields(self, db, clock):
-
         from cerebra.infrastructure.persistence.sqlite_stores import SQLiteAuditLog
 
         audit = SQLiteAuditLog(db)
