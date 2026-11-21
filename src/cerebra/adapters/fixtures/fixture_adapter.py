@@ -3,20 +3,14 @@
 Satisfies the same port contracts as the live YouTube adapter (LSP).
 No real YouTube HTTP calls ever made here.
 """
+
 from __future__ import annotations
 
 import json
 from pathlib import Path
-from typing import Optional
 
-from cerebra.domain.entities import ChannelMetadata, PlaylistItem, VideoMetadata
+from cerebra.domain.entities import ChannelMetadata, VideoMetadata
 from cerebra.domain.errors import channel_not_found, video_not_found
-from cerebra.ports.interfaces import (
-    PlaylistWriter,
-    PublicChannelReader,
-    PublicVideoReader,
-    UserLibraryReader,
-)
 
 _FIXTURES_DIR = Path(__file__).parent.parent.parent.parent.parent / "tests" / "fixtures"
 
@@ -29,7 +23,7 @@ def _load_json(path: Path) -> object:
 class FixtureVideoReader:
     """PublicVideoReader backed by JSON fixture files."""
 
-    def __init__(self, fixture_dir: Optional[Path] = None) -> None:
+    def __init__(self, fixture_dir: Path | None = None) -> None:
         self._dir = fixture_dir or _FIXTURES_DIR / "videos"
         # In-memory index built from fixture files
         self._videos: dict[str, VideoMetadata] = {}
@@ -43,8 +37,8 @@ class FixtureVideoReader:
                 data = json.loads(f.read_text(encoding="utf-8"))
                 v = _dict_to_video(data)
                 self._videos[v.video_id] = v
-            except Exception:
-                pass
+            except (OSError, ValueError, KeyError, TypeError):
+                continue  # skip malformed fixture file
 
     async def get_video(self, video_id: str) -> VideoMetadata:
         v = self._videos.get(video_id)
@@ -59,26 +53,32 @@ class FixtureVideoReader:
         self,
         query: str,
         max_results: int = 25,
-        language: Optional[str] = None,
+        language: str | None = None,
     ) -> list[VideoMetadata]:
         q = query.lower()
         results = [
-            v for v in self._videos.values()
-            if q in v.title.lower() or q in v.description.lower()
+            v
+            for v in self._videos.values()
+            if q in v.title.lower()
+            or q in v.description.lower()
             or any(q in t.lower() for t in v.tags)
         ]
         if language:
-            results = [v for v in results if not v.language or v.language.lower() == language.lower()]
+            results = [
+                v for v in results if not v.language or v.language.lower() == language.lower()
+            ]
         return results[:max_results]
 
-    async def get_channel_uploads(self, channel_id: str, max_results: int = 50) -> list[VideoMetadata]:
+    async def get_channel_uploads(
+        self, channel_id: str, max_results: int = 50
+    ) -> list[VideoMetadata]:
         return [v for v in self._videos.values() if v.channel_id == channel_id][:max_results]
 
 
 class FixtureChannelReader:
     """PublicChannelReader backed by JSON fixture files."""
 
-    def __init__(self, fixture_dir: Optional[Path] = None) -> None:
+    def __init__(self, fixture_dir: Path | None = None) -> None:
         self._dir = fixture_dir or _FIXTURES_DIR / "channels"
         self._channels: dict[str, ChannelMetadata] = {}
         self._handles: dict[str, str] = {}
@@ -95,8 +95,8 @@ class FixtureChannelReader:
                 handle = data.get("handle", "")
                 if handle:
                     self._handles[handle.lstrip("@")] = c.channel_id
-            except Exception:
-                pass
+            except (OSError, ValueError, KeyError, TypeError):
+                continue  # skip malformed fixture file
 
     async def get_channel(self, channel_id: str) -> ChannelMetadata:
         c = self._channels.get(channel_id)
@@ -119,15 +119,14 @@ class FixtureChannelReader:
     async def search_channels(self, query: str, max_results: int = 25) -> list[ChannelMetadata]:
         q = query.lower()
         return [
-            c for c in self._channels.values()
-            if q in c.title.lower() or q in c.description.lower()
+            c for c in self._channels.values() if q in c.title.lower() or q in c.description.lower()
         ][:max_results]
 
 
 class FixtureUserLibraryReader:
     """UserLibraryReader backed by JSON fixture files."""
 
-    def __init__(self, fixture_dir: Optional[Path] = None) -> None:
+    def __init__(self, fixture_dir: Path | None = None) -> None:
         self._dir = fixture_dir or _FIXTURES_DIR / "playlists"
         self._liked: list[VideoMetadata] = []
         self._subscriptions: list[ChannelMetadata] = []
@@ -168,7 +167,9 @@ class FixtureUserLibraryReader:
     async def get_playlists(self, max_results: int = 200) -> list[dict[str, object]]:
         return self._playlists[:max_results]
 
-    async def get_playlist_items(self, playlist_id: str, max_results: int = 500) -> list[VideoMetadata]:
+    async def get_playlist_items(
+        self, playlist_id: str, max_results: int = 500
+    ) -> list[VideoMetadata]:
         return self._playlist_items.get(playlist_id, [])[:max_results]
 
 
@@ -187,32 +188,35 @@ class FixturePlaylistWriter:
         """Fixture mode has no OAuth; write access is always 'available'."""
         return None
 
-    async def create_playlist(
-        self, title: str, description: str, privacy_status: str
-    ) -> str:
+    async def create_playlist(self, title: str, description: str, privacy_status: str) -> str:
         if self.fail_on_create:
             from cerebra.domain.errors import transient_error
+
             raise transient_error("Fixture-injected playlist creation failure")
         playlist_id = f"PLfixture{self._next_id:06d}"
         self._next_id += 1
-        self.created_playlists.append({
-            "id": playlist_id, "title": title,
-            "description": description, "privacy_status": privacy_status,
-        })
+        self.created_playlists.append(
+            {
+                "id": playlist_id,
+                "title": title,
+                "description": description,
+                "privacy_status": privacy_status,
+            }
+        )
         return playlist_id
 
-    async def add_playlist_item(
-        self, playlist_id: str, video_id: str, position: int
-    ) -> None:
+    async def add_playlist_item(self, playlist_id: str, video_id: str, position: int) -> None:
         if video_id in self.fail_on_item_ids:
             from cerebra.domain.errors import transient_error
+
             raise transient_error(f"Fixture-injected item failure for {video_id}")
-        self.added_items.append({
-            "playlist_id": playlist_id, "video_id": video_id, "position": position
-        })
+        self.added_items.append(
+            {"playlist_id": playlist_id, "video_id": video_id, "position": position}
+        )
 
 
 # ── Helper converters ─────────────────────────────────────────────────────────
+
 
 def _dict_to_video(d: dict[str, object]) -> VideoMetadata:
     tags = d.get("tags", [])

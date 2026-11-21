@@ -1,4 +1,5 @@
 """Real-clock implementation of the Clock port."""
+
 from __future__ import annotations
 
 import datetime
@@ -9,7 +10,7 @@ class RealClock:
     """Production clock. Inject this at the composition root."""
 
     def utcnow_iso(self) -> str:
-        return datetime.datetime.now(datetime.timezone.utc).isoformat()
+        return datetime.datetime.now(datetime.UTC).isoformat()
 
     def utcnow_timestamp(self) -> float:
         return time.time()
@@ -22,7 +23,7 @@ class FakeClock:
         self._ts = timestamp
 
     def utcnow_iso(self) -> str:
-        return datetime.datetime.fromtimestamp(self._ts, tz=datetime.timezone.utc).isoformat()
+        return datetime.datetime.fromtimestamp(self._ts, tz=datetime.UTC).isoformat()
 
     def utcnow_timestamp(self) -> float:
         return self._ts

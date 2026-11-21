@@ -8,10 +8,11 @@ Selects and orders videos so that:
   - no duplicate IDs
   - fill ratio default 90% (TBD-8)
 """
+
 from __future__ import annotations
 
+from collections.abc import Sequence
 from dataclasses import dataclass
-from typing import Optional, Sequence
 
 from cerebra.domain.entities import PlaylistItem, VideoMetadata
 
@@ -22,7 +23,7 @@ DEFAULT_FILL_RATIO = 0.90
 class SolverResult:
     items: list[PlaylistItem]
     total_seconds: int
-    feasible: bool          # True if fill ratio met
+    feasible: bool  # True if fill ratio met
     infeasible_reason: str  # non-empty when feasible=False
 
 
@@ -30,8 +31,8 @@ def solve_playlist(
     topic: str,
     total_duration_seconds: int,
     candidates: Sequence[VideoMetadata],
-    max_video_duration_seconds: Optional[int] = None,
-    language: Optional[str] = None,
+    max_video_duration_seconds: int | None = None,
+    language: str | None = None,
     fill_ratio: float = DEFAULT_FILL_RATIO,
 ) -> SolverResult:
     """Greedy knapsack solver (FR-4.1 to FR-4.3).
@@ -48,12 +49,13 @@ def solve_playlist(
         # Hard constraints
         if video.video_id in seen_ids:
             continue
-        if max_video_duration_seconds is not None:
-            if video.duration_seconds > max_video_duration_seconds:
-                continue
-        if language:
-            if video.language and video.language.lower() != language.lower():
-                continue
+        if (
+            max_video_duration_seconds is not None
+            and video.duration_seconds > max_video_duration_seconds
+        ):
+            continue
+        if language and video.language and video.language.lower() != language.lower():
+            continue
         if running_total + video.duration_seconds > total_duration_seconds:
             continue
 

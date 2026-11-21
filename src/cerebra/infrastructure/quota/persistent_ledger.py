@@ -4,6 +4,7 @@ YouTube's real quota is per Google Cloud project per Pacific day, not per server
 Without persistence, restarting the MCP server would reset our counters to zero while the
 real quota is still spent, so the ledger could approve work YouTube will then refuse.
 """
+
 from __future__ import annotations
 
 import datetime
@@ -88,4 +89,3 @@ class PersistentQuotaLedger(QuotaLedger):
         out = super().status()
         out["day_pacific"] = self._day
         return out
-

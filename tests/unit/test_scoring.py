@@ -1,12 +1,19 @@
 """Unit tests for domain/scoring.py (FR-1.5, FR-2.3, B.4)."""
+
 import math
-import pytest
 
 from cerebra.domain.scoring import (
-    W_TFIDF, W_CATEGORY, W_CHANNEL, W_LANGUAGE, W_DURATION_BAND,
-    _WEIGHTS, rank_videos, rank_channels, cosine_similarity_texts,
+    _WEIGHTS,
+    W_CATEGORY,
+    W_CHANNEL,
+    W_DURATION_BAND,
+    W_LANGUAGE,
+    W_TFIDF,
+    cosine_similarity_texts,
+    rank_channels,
+    rank_videos,
 )
-from tests.conftest import make_video, make_channel
+from tests.conftest import make_channel, make_video
 
 
 class TestWeights:
@@ -35,8 +42,7 @@ class TestRankVideos:
     def test_scores_in_zero_one(self):
         seed = make_video(video_id="seed01ABCDE", title="Python tutorial machine learning")
         cands = [
-            make_video(video_id=f"cand{i:07d}", title=f"Python ML video {i}",
-                       tags=["python", "ml"])
+            make_video(video_id=f"cand{i:07d}", title=f"Python ML video {i}", tags=["python", "ml"])
             for i in range(5)
         ]
         results = rank_videos(seed, cands)
@@ -72,8 +78,12 @@ class TestRankVideos:
 
     def test_same_category_boosts_score(self):
         seed = make_video(video_id="seed01ABCDE", category_id="27", title="Education video")
-        same_cat = make_video(video_id="same01ABCDE", category_id="27", title="Education video similar")
-        diff_cat = make_video(video_id="diff01ABCDE", category_id="22", title="Education video other")
+        same_cat = make_video(
+            video_id="same01ABCDE", category_id="27", title="Education video similar"
+        )
+        diff_cat = make_video(
+            video_id="diff01ABCDE", category_id="22", title="Education video other"
+        )
         results = rank_videos(seed, [same_cat, diff_cat])
         same_score = next(r.score for r in results if r.video_id == "same01ABCDE")
         diff_score = next(r.score for r in results if r.video_id == "diff01ABCDE")
@@ -88,10 +98,7 @@ class TestRankChannels:
 
     def test_scores_in_zero_one(self):
         seed = make_channel()
-        cands = [
-            make_channel(channel_id=f"UCsomeChannel{i:010d}")
-            for i in range(5)
-        ]
+        cands = [make_channel(channel_id=f"UCsomeChannel{i:010d}") for i in range(5)]
         results = rank_channels(seed, cands)
         for r in results:
             assert 0.0 <= r.score <= 1.0

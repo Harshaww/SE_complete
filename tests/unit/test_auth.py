@@ -1,4 +1,5 @@
 """Token storage + OAuth manager (FR-5.1–5.5, CON-3, NFR-SE-2/3, ADR-D)."""
+
 # mark: FR-5.1, FR-5.2, FR-5.5, CON-3, NFR-SE-2
 from __future__ import annotations
 
@@ -35,8 +36,11 @@ NOW = 1_800_000_000.0
 
 def token_record(scopes=(SCOPE_READONLY,), authorised_at=NOW, valid=True, refresh=True):
     info = {
-        "token": "ya29.fake", "client_id": "cid", "client_secret": "csecret",
-        "token_uri": "https://oauth2.googleapis.com/token", "scopes": list(scopes),
+        "token": "ya29.fake",
+        "client_id": "cid",
+        "client_secret": "csecret",
+        "token_uri": "https://oauth2.googleapis.com/token",
+        "scopes": list(scopes),
         "expiry": "2099-01-01T00:00:00Z" if valid else "2001-01-01T00:00:00Z",
     }
     if refresh:
@@ -76,7 +80,8 @@ class TestFileTokenStore:
 
     def test_no_temp_files_left(self, tmp_path):
         st = FileTokenStore(tmp_path / "t.json")
-        st.save_token({"a": 1}); st.save_token({"a": 2})
+        st.save_token({"a": 1})
+        st.save_token({"a": 2})
         assert [p.name for p in tmp_path.iterdir()] == ["t.json"]
 
     def test_loose_permissions_are_tightened(self, tmp_path, capsys):
@@ -92,12 +97,16 @@ class TestFileTokenStore:
         path = tmp_path / "t.json"
         st = FileTokenStore(path)
         assert st.load_token() is None
-        path.write_text("{not json"); assert st.load_token() is None
-        path.write_text("[1,2]"); assert st.load_token() is None
+        path.write_text("{not json")
+        assert st.load_token() is None
+        path.write_text("[1,2]")
+        assert st.load_token() is None
 
     def test_delete_idempotent(self, tmp_path):
         st = FileTokenStore(tmp_path / "t.json")
-        st.delete_token(); st.save_token({"a": 1}); st.delete_token()
+        st.delete_token()
+        st.save_token({"a": 1})
+        st.delete_token()
         assert st.load_token() is None
 
     def test_failed_write_cleans_up(self, tmp_path):
@@ -112,12 +121,15 @@ class TestKeyringAndFallback:
     def test_keyring_roundtrip(self):
         kr = KeyringTokenStore(keyring_module=FakeKeyring())
         assert kr.load_token() is None
-        kr.save_token({"a": 1}); assert kr.load_token() == {"a": 1}
-        kr.delete_token(); kr.delete_token()  # second delete must not raise
+        kr.save_token({"a": 1})
+        assert kr.load_token() == {"a": 1}
+        kr.delete_token()
+        kr.delete_token()  # second delete must not raise
         assert kr.load_token() is None and kr.backend_name == "keyring"
 
     def test_keyring_garbage_value(self):
-        fk = FakeKeyring(); fk.d[("cerebra", "youtube-oauth-token")] = "not-json"
+        fk = FakeKeyring()
+        fk.d[("cerebra", "youtube-oauth-token")] = "not-json"
         assert KeyringTokenStore(keyring_module=fk).load_token() is None
         fk.d[("cerebra", "youtube-oauth-token")] = "[1]"
         assert KeyringTokenStore(keyring_module=fk).load_token() is None
@@ -133,7 +145,8 @@ class TestKeyringAndFallback:
         assert file.load_token() is None
 
     def test_keyring_preferred_and_stale_file_removed(self, tmp_path):
-        file = FileTokenStore(tmp_path / "t.json"); file.save_token({"old": 1})
+        file = FileTokenStore(tmp_path / "t.json")
+        file.save_token({"old": 1})
         st = FallbackTokenStore(KeyringTokenStore(keyring_module=FakeKeyring()), file)
         st.save_token({"a": 1})
         assert file.load_token() is None and st.load_token() == {"a": 1}
@@ -147,18 +160,37 @@ class TestKeyringAndFallback:
         assert isinstance(keyring_available(), bool)
 
     def test_in_memory_isolated_copy(self):
-        st = InMemoryTokenStore(); d = {"a": [1]}
-        st.save_token(d); d["a"].append(2)
+        st = InMemoryTokenStore()
+        d = {"a": [1]}
+        st.save_token(d)
+        d["a"].append(2)
         assert st.load_token() == {"a": [1]} and st.backend_name == "memory"
-        st.delete_token(); assert st.load_token() is None
+        st.delete_token()
+        assert st.load_token() is None
 
 
-def manager(store=None, *, refresh=None, flow=None, post=None, interactive=True,
-            cid="cid", secret="csecret", now=NOW):
+def manager(
+    store=None,
+    *,
+    refresh=None,
+    flow=None,
+    post=None,
+    interactive=True,
+    cid="cid",
+    secret="csecret",
+    now=NOW,
+):
     store = store or InMemoryTokenStore()
     return OAuthManager(
-        store, cid, secret, FakeClock(now), interactive=interactive,
-        refresh_fn=refresh, flow_factory=flow, http_post=post, stderr=io.StringIO(),
+        store,
+        cid,
+        secret,
+        FakeClock(now),
+        interactive=interactive,
+        refresh_fn=refresh,
+        flow_factory=flow,
+        http_post=post,
+        stderr=io.StringIO(),
     ), store
 
 
@@ -167,9 +199,16 @@ class FakeFlowCreds:
         self.scopes = scopes
 
     def to_json(self):
-        return json.dumps({"token": "new", "refresh_token": "r2", "client_id": "cid",
-                           "client_secret": "csecret", "scopes": self.scopes,
-                           "expiry": "2099-01-01T00:00:00Z"})
+        return json.dumps(
+            {
+                "token": "new",
+                "refresh_token": "r2",
+                "client_id": "cid",
+                "client_secret": "csecret",
+                "scopes": self.scopes,
+                "expiry": "2099-01-01T00:00:00Z",
+            }
+        )
 
 
 class FakeFlow:
@@ -220,8 +259,10 @@ class TestTokenLifecycle:
     def test_expired_token_refreshed_and_saved(self):
         def refresh(c):
             c.token = "refreshed"
-            from datetime import datetime, timedelta
+            from datetime import datetime
+
             c.expiry = datetime(2099, 1, 1)
+
         m, st = manager(refresh=refresh)
         st.save_token(token_record(valid=False))
         assert m.ensure_valid_token().token == "refreshed"
@@ -243,15 +284,21 @@ class TestTokenLifecycle:
         assert e.value.code == ErrorCode.AUTH_EXPIRED
 
     def test_network_failure_during_refresh_is_transient_not_expired(self):
-        def refresh(c): raise TransportError("offline")
-        m, st = manager(refresh=refresh); st.save_token(token_record(valid=False))
+        def refresh(c):
+            raise TransportError("offline")
+
+        m, st = manager(refresh=refresh)
+        st.save_token(token_record(valid=False))
         with pytest.raises(CerebraError) as e:
             m.ensure_valid_token()
         assert e.value.code == ErrorCode.TRANSIENT_ERROR and e.value.retryable
 
     def test_unexpected_refresh_error_is_transient(self):
-        def refresh(c): raise ValueError("weird")
-        m, st = manager(refresh=refresh); st.save_token(token_record(valid=False))
+        def refresh(c):
+            raise ValueError("weird")
+
+        m, st = manager(refresh=refresh)
+        st.save_token(token_record(valid=False))
         with pytest.raises(CerebraError) as e:
             m.ensure_valid_token()
         assert e.value.code == ErrorCode.TRANSIENT_ERROR
@@ -287,7 +334,8 @@ class TestTestingModeExpiry:
         assert s["reauthorise_soon"] is True and s["testing_mode_expiry_hint_hours"] == 1.0
 
     def test_status_no_warning_when_fresh_and_never_leaks_tokens(self):
-        m, st = manager(now=NOW + 60); st.save_token(token_record())
+        m, st = manager(now=NOW + 60)
+        st.save_token(token_record())
         s = m.status()
         assert s["reauthorise_soon"] is False and s["authenticated"] and not s["write_access"]
         blob = json.dumps(s)
@@ -311,18 +359,21 @@ class TestInteractiveFlows:
         assert out["authenticated"] and st.load_token()["authorised_at"] == NOW
 
     def test_incremental_upgrade_keeps_existing_scope(self):
-        m, st = manager(flow=FakeFlow); st.save_token(token_record())
+        m, st = manager(flow=FakeFlow)
+        st.save_token(token_record())
         m.request_additional_scope(SCOPE_WRITE)
         assert set(FakeFlow.instances[0].scopes) == {SCOPE_READONLY, SCOPE_WRITE}
         assert m.has_scope(SCOPE_WRITE) and m.status()["write_access"]
 
     def test_ensure_scope_upgrades_when_interactive(self):
-        m, st = manager(flow=FakeFlow); st.save_token(token_record())
+        m, st = manager(flow=FakeFlow)
+        st.save_token(token_record())
         assert m.ensure_scope(SCOPE_WRITE).token == "new"
         assert len(FakeFlow.instances) == 1
 
     def test_ensure_scope_noninteractive_fails_closed(self):
-        m, st = manager(flow=FakeFlow, interactive=False); st.save_token(token_record())
+        m, st = manager(flow=FakeFlow, interactive=False)
+        st.save_token(token_record())
         with pytest.raises(CerebraError) as e:
             m.ensure_scope(SCOPE_WRITE)
         assert e.value.code == ErrorCode.INSUFFICIENT_SCOPE and not FakeFlow.instances
@@ -339,8 +390,8 @@ class TestInteractiveFlows:
         assert set(FakeFlow.instances[0].scopes) == {SCOPE_READONLY, SCOPE_WRITE}
 
     def test_already_granted_scope_needs_no_flow(self):
-        m, st = manager(flow=lambda *a: pytest.fail("no flow")); st.save_token(
-            token_record(scopes=(SCOPE_WRITE,)))
+        m, st = manager(flow=lambda *a: pytest.fail("no flow"))
+        st.save_token(token_record(scopes=(SCOPE_WRITE,)))
         assert m.ensure_scope(SCOPE_READONLY).token == "ya29.fake"
 
     def test_missing_client_credentials(self):
@@ -354,17 +405,24 @@ class TestInteractiveFlows:
 class TestRevoke:
     def test_revoke_posts_refresh_token_and_deletes_local(self):
         calls = []
+
         def post(url, **kw):
-            calls.append((url, kw)); return SimpleNamespace(status_code=200)
-        m, st = manager(post=post); st.save_token(token_record())
+            calls.append((url, kw))
+            return SimpleNamespace(status_code=200)
+
+        m, st = manager(post=post)
+        st.save_token(token_record())
         assert m.revoke() == {"revoked_remotely": True, "local_token_deleted": True}
         assert calls[0][0] == "https://oauth2.googleapis.com/revoke"
         assert calls[0][1]["data"] == {"token": "1//refresh"}
         assert st.load_token() is None and not m.is_authenticated()
 
     def test_revoke_offline_still_deletes_locally(self):
-        def post(url, **kw): raise ConnectionError()
-        m, st = manager(post=post); st.save_token(token_record())
+        def post(url, **kw):
+            raise ConnectionError()
+
+        m, st = manager(post=post)
+        st.save_token(token_record())
         assert m.revoke() == {"revoked_remotely": False, "local_token_deleted": True}
         assert st.load_token() is None
 

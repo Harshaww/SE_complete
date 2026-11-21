@@ -1,11 +1,10 @@
 """Application use case: find_similar_videos / find_similar_channels (FR-1)."""
-from __future__ import annotations
 
-from typing import Optional
+from __future__ import annotations
 
 from cerebra.config import Config
 from cerebra.domain.entities import SimilarChannel, SimilarVideo
-from cerebra.domain.errors import CerebraError, quota_budget_exceeded
+from cerebra.domain.errors import quota_budget_exceeded
 from cerebra.domain.normalise import normalise_channel_ref, normalise_video_ref
 from cerebra.domain.quota import QuotaLedger
 from cerebra.domain.scoring import rank_channels, rank_videos
@@ -71,9 +70,7 @@ class FindSimilarUseCase:
             candidates = []
 
             # 1. Same-channel uploads (FR-1.4 — prefer cheap reads)
-            channel_uploads = await self._video.get_channel_uploads(
-                seed.channel_id, max_results=50
-            )
+            channel_uploads = await self._video.get_channel_uploads(seed.channel_id, max_results=50)
             self._quota.consume("playlistItems.list", 1)
             candidates.extend(channel_uploads)
 

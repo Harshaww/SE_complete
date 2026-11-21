@@ -1,4 +1,5 @@
 """Cerebra server configuration (FR-5.11, TBD-2 through TBD-9)."""
+
 from __future__ import annotations
 
 import os
@@ -42,20 +43,18 @@ class Config:
 
     # Similarity / results
     max_candidates: int = int(os.environ.get("CEREBRA_MAX_CANDIDATES", "200"))
-    default_result_limit: int = 10   # FR-1.7
-    max_result_limit: int = 50       # FR-1.7
+    default_result_limit: int = 10  # FR-1.7
+    max_result_limit: int = 50  # FR-1.7
 
     # Duration bands (TBD-7)
-    band_short_max_seconds: int = 240   # < 4 min
+    band_short_max_seconds: int = 240  # < 4 min
     band_medium_max_seconds: int = 1200  # 4–20 min
 
     # Playlist fill ratio (TBD-8)
     playlist_fill_ratio: float = 0.90
 
     # OAuth (TBD-10) — IDs from env, never from source
-    google_client_id: str = field(
-        default_factory=lambda: os.environ.get("GOOGLE_CLIENT_ID", "")
-    )
+    google_client_id: str = field(default_factory=lambda: os.environ.get("GOOGLE_CLIENT_ID", ""))
     google_client_secret: str = field(
         default_factory=lambda: os.environ.get("GOOGLE_CLIENT_SECRET", "")
     )
@@ -79,13 +78,13 @@ class Config:
     # Allow the server to start the browser consent flow itself when create_playlist
     # needs the `youtube` scope (FR-5.1). If False, it fails with INSUFFICIENT_SCOPE and
     # tells the human to run `cerebra-cli login --write`.
-    interactive_auth: bool = field(default_factory=lambda: _env_flag("CEREBRA_INTERACTIVE_AUTH", True))
+    interactive_auth: bool = field(
+        default_factory=lambda: _env_flag("CEREBRA_INTERACTIVE_AUTH", True)
+    )
 
     # Storage
     data_dir: Path = field(
-        default_factory=lambda: Path(
-            os.environ.get("CEREBRA_DATA_DIR", str(_DEFAULT_DATA_DIR))
-        )
+        default_factory=lambda: Path(os.environ.get("CEREBRA_DATA_DIR", str(_DEFAULT_DATA_DIR)))
     )
 
     # MCP transport (TBD-5): stdio only for Phases 2–4

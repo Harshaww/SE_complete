@@ -2,6 +2,7 @@
 
 Every error has: code (str), message (str), retryable (bool), suggested_action (str).
 """
+
 from __future__ import annotations
 
 from dataclasses import dataclass
@@ -63,7 +64,7 @@ class CerebraError(Exception):
 def invalid_video_id(ref: str) -> CerebraError:
     return CerebraError(
         ErrorCode.INVALID_VIDEO_ID,
-        f"[DATA] The reference {repr(ref)} is not a valid YouTube video URL or ID.",
+        f"[DATA] The reference {ref!r} is not a valid YouTube video URL or ID.",
         suggested_action="Provide an 11-character video ID or a valid YouTube watch/short/youtu.be URL.",
     )
 
@@ -71,7 +72,7 @@ def invalid_video_id(ref: str) -> CerebraError:
 def invalid_channel_ref(ref: str) -> CerebraError:
     return CerebraError(
         ErrorCode.INVALID_CHANNEL_REF,
-        f"[DATA] The reference {repr(ref)} is not a valid YouTube channel URL, handle or ID.",
+        f"[DATA] The reference {ref!r} is not a valid YouTube channel URL, handle or ID.",
         suggested_action="Provide a /channel/, /@handle or /c/ URL, a @handle, or a 24-character channel ID.",
     )
 
@@ -79,7 +80,7 @@ def invalid_channel_ref(ref: str) -> CerebraError:
 def video_not_found(video_id: str) -> CerebraError:
     return CerebraError(
         ErrorCode.VIDEO_NOT_FOUND_OR_PRIVATE,
-        f"Video {repr(video_id)} was not found or is private.",
+        f"Video {video_id!r} was not found or is private.",
         suggested_action="Check the video ID or try a different video.",
     )
 
@@ -87,7 +88,7 @@ def video_not_found(video_id: str) -> CerebraError:
 def channel_not_found(channel_id: str) -> CerebraError:
     return CerebraError(
         ErrorCode.CHANNEL_NOT_FOUND,
-        f"Channel {repr(channel_id)} was not found.",
+        f"Channel {channel_id!r} was not found.",
         suggested_action="Check the channel ID or handle.",
     )
 
@@ -128,7 +129,7 @@ def quota_exhausted(reset_at: str) -> CerebraError:
 def proposal_not_found(proposal_id: str) -> CerebraError:
     return CerebraError(
         ErrorCode.PROPOSAL_NOT_FOUND,
-        f"Proposal {repr(proposal_id)} was not found.",
+        f"Proposal {proposal_id!r} was not found.",
         suggested_action="Run propose_playlist again to create a new proposal.",
     )
 
@@ -136,7 +137,7 @@ def proposal_not_found(proposal_id: str) -> CerebraError:
 def proposal_expired(proposal_id: str) -> CerebraError:
     return CerebraError(
         ErrorCode.PROPOSAL_EXPIRED,
-        f"Proposal {repr(proposal_id)} has expired (proposals expire after 15 minutes).",
+        f"Proposal {proposal_id!r} has expired (proposals expire after 15 minutes).",
         suggested_action="Run propose_playlist again to create a new proposal.",
     )
 
@@ -144,7 +145,7 @@ def proposal_expired(proposal_id: str) -> CerebraError:
 def proposal_already_used(proposal_id: str) -> CerebraError:
     return CerebraError(
         ErrorCode.PROPOSAL_ALREADY_USED,
-        f"Proposal {repr(proposal_id)} has already been used.",
+        f"Proposal {proposal_id!r} has already been used.",
         suggested_action="A playlist was already created from this proposal. Run propose_playlist again if you want another.",
     )
 
@@ -168,7 +169,7 @@ def no_youtube_channel() -> CerebraError:
 def invalid_argument(param: str, reason: str) -> CerebraError:
     return CerebraError(
         ErrorCode.INVALID_ARGUMENT,
-        f"[DATA] Invalid value for parameter {repr(param)}: {reason}",
+        f"[DATA] Invalid value for parameter {param!r}: {reason}",
         suggested_action="Check the parameter value and try again.",
     )
 

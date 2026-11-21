@@ -1,8 +1,9 @@
 """MCP tool schemas and input validation (FR-5.12, FR-5.14)."""
+
 from __future__ import annotations
 
 import re
-from typing import Any, Optional
+from typing import Any
 
 from cerebra.domain.errors import invalid_argument
 
@@ -67,7 +68,7 @@ def validate_duration_seconds(val: Any, param: str) -> int:
     return val
 
 
-def validate_language(lang: Any) -> Optional[str]:
+def validate_language(lang: Any) -> str | None:
     if lang is None:
         return None
     if not isinstance(lang, str):

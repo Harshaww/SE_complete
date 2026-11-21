@@ -1,19 +1,20 @@
 """Domain entities – pure data, no I/O (FR-1.3, FR-1.6)."""
+
 from __future__ import annotations
 
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Optional
 
 
 class DurationBand(str, Enum):
     """Duration bands (TBD-7 resolved: short<4min, medium 4-20min, long>20min)."""
-    SHORT = "short"    # < 240 s
+
+    SHORT = "short"  # < 240 s
     MEDIUM = "medium"  # 240–1200 s
-    LONG = "long"      # > 1200 s
+    LONG = "long"  # > 1200 s
 
     @classmethod
-    def from_seconds(cls, seconds: int) -> "DurationBand":
+    def from_seconds(cls, seconds: int) -> DurationBand:
         if seconds < 240:
             return cls.SHORT
         elif seconds <= 1200:
@@ -23,6 +24,7 @@ class DurationBand(str, Enum):
 
 class ProposalState(str, Enum):
     """Proposal state machine (SRS B.3)."""
+
     PROPOSED = "PROPOSED"
     CONFIRMED = "CONFIRMED"
     PARTIAL = "PARTIAL"
@@ -39,22 +41,28 @@ class ProposalState(str, Enum):
             ProposalState.FAILED,
         )
 
-    def allowed_transitions(self) -> frozenset["ProposalState"]:
-        _transitions: dict["ProposalState", frozenset["ProposalState"]] = {
-            ProposalState.PROPOSED: frozenset({
-                ProposalState.CONFIRMED,
-                ProposalState.EXPIRED,
-                ProposalState.CANCELLED,
-            }),
-            ProposalState.CONFIRMED: frozenset({
-                ProposalState.CREATED,
-                ProposalState.PARTIAL,
-                ProposalState.FAILED,
-            }),
-            ProposalState.PARTIAL: frozenset({
-                ProposalState.CREATED,
-                ProposalState.FAILED,
-            }),
+    def allowed_transitions(self) -> frozenset[ProposalState]:
+        _transitions: dict[ProposalState, frozenset[ProposalState]] = {
+            ProposalState.PROPOSED: frozenset(
+                {
+                    ProposalState.CONFIRMED,
+                    ProposalState.EXPIRED,
+                    ProposalState.CANCELLED,
+                }
+            ),
+            ProposalState.CONFIRMED: frozenset(
+                {
+                    ProposalState.CREATED,
+                    ProposalState.PARTIAL,
+                    ProposalState.FAILED,
+                }
+            ),
+            ProposalState.PARTIAL: frozenset(
+                {
+                    ProposalState.CREATED,
+                    ProposalState.FAILED,
+                }
+            ),
             ProposalState.CREATED: frozenset(),
             ProposalState.EXPIRED: frozenset(),
             ProposalState.CANCELLED: frozenset(),
@@ -62,7 +70,7 @@ class ProposalState(str, Enum):
         }
         return _transitions[self]
 
-    def can_transition_to(self, next_state: "ProposalState") -> bool:
+    def can_transition_to(self, next_state: ProposalState) -> bool:
         return next_state in self.allowed_transitions()
 
 
@@ -75,6 +83,7 @@ class PrivacyStatus(str, Enum):
 @dataclass(frozen=True)
 class VideoMetadata:
     """Metadata for a single YouTube video (FR-1.3)."""
+
     video_id: str
     title: str
     description: str
@@ -82,7 +91,7 @@ class VideoMetadata:
     channel_title: str
     duration_seconds: int
     category_id: str
-    language: str          # e.g. "en", "" if unknown
+    language: str  # e.g. "en", "" if unknown
     tags: list[str] = field(default_factory=list)
     tags_missing: bool = False
     thumbnail_url: str = ""
@@ -115,13 +124,14 @@ class VideoMetadata:
 @dataclass(frozen=True)
 class ChannelMetadata:
     """Metadata for a YouTube channel (FR-1.3)."""
+
     channel_id: str
     title: str
     description: str
     keywords: list[str] = field(default_factory=list)
     topic_categories: list[str] = field(default_factory=list)
     language: str = ""
-    subscriber_count: Optional[int] = None
+    subscriber_count: int | None = None
     upload_cadence_per_month: float = 0.0
     recent_upload_titles: list[str] = field(default_factory=list)
 
@@ -139,6 +149,7 @@ class ChannelMetadata:
 @dataclass(frozen=True)
 class SimilarVideo:
     """A ranked similar video result (FR-1.6)."""
+
     rank: int
     video_id: str
     title: str
@@ -160,17 +171,19 @@ class SimilarVideo:
 @dataclass(frozen=True)
 class SimilarChannel:
     """A ranked similar channel result (FR-1.6)."""
+
     rank: int
     channel_id: str
     title: str
     score: float
-    subscriber_count: Optional[int]
+    subscriber_count: int | None
     url: str
 
 
 @dataclass(frozen=True)
 class PlaylistItem:
     """A video in a proposed/created playlist."""
+
     video_id: str
     title: str
     channel_title: str
@@ -192,23 +205,24 @@ class PlaylistItem:
 @dataclass
 class PlaylistProposal:
     """A proposed playlist awaiting confirmation (FR-4.4, B.3)."""
+
     proposal_id: str
     topic: str
     total_duration_seconds: int
-    max_video_duration_seconds: Optional[int]
-    language: Optional[str]
+    max_video_duration_seconds: int | None
+    language: str | None
     items: list[PlaylistItem]
-    created_at: str         # ISO 8601 datetime
-    expires_at: str         # ISO 8601 datetime
+    created_at: str  # ISO 8601 datetime
+    expires_at: str  # ISO 8601 datetime
     state: ProposalState
-    digest: str             # SHA-256 of canonical proposal content
+    digest: str  # SHA-256 of canonical proposal content
     privacy_status: PrivacyStatus = PrivacyStatus.PRIVATE
     # Quota reservation
     quota_reservation_general: int = 0
     quota_reservation_write: int = 0
     # Created playlist info (populated after creation)
-    playlist_id: Optional[str] = None
-    playlist_url: Optional[str] = None
+    playlist_id: str | None = None
+    playlist_url: str | None = None
     failed_item_ids: list[str] = field(default_factory=list)
     # ADR-C: per-item write state (video_id -> PENDING | INSERTED | FAILED), persisted
     # BEFORE each write so a crash can be reconciled against remote state.

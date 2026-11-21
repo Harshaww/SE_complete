@@ -1,7 +1,7 @@
 """Golden / snapshot test: deterministic ranking on a fixed corpus (FR-1.9, L9)."""
+
 from __future__ import annotations
 
-import pytest
 from cerebra.domain.scoring import rank_videos
 from tests.conftest import make_video
 
@@ -23,7 +23,9 @@ _CANDIDATES = [
         title="Machine learning fundamentals with scikit-learn",
         description="Learn ML basics with hands-on Python examples",
         tags=["machine learning", "scikit-learn", "python"],
-        category_id="27", language="en", duration_seconds=1500,
+        category_id="27",
+        language="en",
+        duration_seconds=1500,
         channel_id="UCgolden000001234567890",  # same channel
     ),
     make_video(
@@ -31,7 +33,9 @@ _CANDIDATES = [
         title="Deep learning neural networks tutorial",
         description="Neural networks from scratch in Python",
         tags=["deep learning", "neural networks", "python"],
-        category_id="27", language="en", duration_seconds=2700,
+        category_id="27",
+        language="en",
+        duration_seconds=2700,
         channel_id="UCother000001234567890",
     ),
     make_video(
@@ -39,7 +43,9 @@ _CANDIDATES = [
         title="Python for data analysis pandas numpy",
         description="Data analysis with pandas and numpy",
         tags=["python", "pandas", "data analysis"],
-        category_id="27", language="en", duration_seconds=1200,
+        category_id="27",
+        language="en",
+        duration_seconds=1200,
         channel_id="UCother000001234567890",
     ),
     make_video(
@@ -47,7 +53,9 @@ _CANDIDATES = [
         title="Cooking Italian pasta recipes",
         description="Authentic Italian cuisine",
         tags=["cooking", "pasta", "italian"],
-        category_id="22", language="en", duration_seconds=600,
+        category_id="22",
+        language="en",
+        duration_seconds=600,
         channel_id="UCcooking00001234567890",
     ),
 ]
@@ -73,10 +81,11 @@ class TestGoldenRanking:
         assert [r.video_id for r in r1] == [r.video_id for r in r2]
         for a, b in zip(r1, r2):
             import math
+
             assert math.isclose(a.score, b.score, abs_tol=1e-12)
 
     def test_seed_excluded(self):
         """FR-1.6: seed is never in results."""
-        results = rank_videos(_SEED, [_SEED] + _CANDIDATES)
+        results = rank_videos(_SEED, [_SEED, *_CANDIDATES])
         ids = [r.video_id for r in results]
         assert _SEED.video_id not in ids

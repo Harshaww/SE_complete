@@ -8,36 +8,36 @@ Three independent pools:
 NOTE: NFR-QU-1 figures (250/400 units) are STALE — see Phase 0 recon and ADR-B.
       Actual write costs: playlists.insert=50, playlistItems.insert=50 each.
 """
+
 from __future__ import annotations
 
 import threading
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from enum import Enum
-from typing import Optional
 
 # Official quota costs (verified against developers.google.com/youtube/v3/determine_quota_cost)
 # TBD-4: re-verify at implementation time.
 QUOTA_COSTS: dict[str, int] = {
-    "search.list": 100,          # from general pool + 1 call from search pool
+    "search.list": 100,  # from general pool + 1 call from search pool
     "videos.list": 1,
     "channels.list": 1,
     "playlistItems.list": 1,
     "playlists.list": 1,
     "subscriptions.list": 1,
     "videoCategories.list": 1,
-    "playlists.insert": 50,      # write
+    "playlists.insert": 50,  # write
     "playlistItems.insert": 50,  # write per item
 }
 
-DEFAULT_DAILY_BUDGET = 10_000      # general pool
-DEFAULT_SEARCH_BUDGET = 100        # search calls/day
-WARN_THRESHOLD = 0.80              # NFR-SA-4
+DEFAULT_DAILY_BUDGET = 10_000  # general pool
+DEFAULT_SEARCH_BUDGET = 100  # search calls/day
+WARN_THRESHOLD = 0.80  # NFR-SA-4
 
 
 class Pool(str, Enum):
     GENERAL = "general"
     SEARCH = "search"
-    WRITE = "write"      # virtual sub-pool of GENERAL for write tracking
+    WRITE = "write"  # virtual sub-pool of GENERAL for write tracking
 
 
 @dataclass
@@ -102,8 +102,7 @@ class QuotaLedger:
         Called BEFORE any API call. Uses max candidate count for worst case.
         """
         write_cost = (
-            QUOTA_COSTS["playlists.insert"]
-            + num_items * QUOTA_COSTS["playlistItems.insert"]
+            QUOTA_COSTS["playlists.insert"] + num_items * QUOTA_COSTS["playlistItems.insert"]
         )
         read_cost = (
             QUOTA_COSTS["search.list"] * 2  # up to 2 search pages
@@ -156,10 +155,7 @@ class QuotaLedger:
     def can_afford(self, general: int = 0, search: int = 0) -> bool:
         """Check (without reserving) if a workflow fits in remaining budget."""
         with self._lock:
-            return (
-                self._general.can_reserve(general)
-                and self._search.can_reserve(search)
-            )
+            return self._general.can_reserve(general) and self._search.can_reserve(search)
 
     # ── Status ──────────────────────────────────────────────────────────────
 

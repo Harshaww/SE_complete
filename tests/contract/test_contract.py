@@ -2,14 +2,16 @@
 
 Both must satisfy the same port contracts (LSP, NFR-MA-1, CON-6).
 """
+
 from __future__ import annotations
 
 import asyncio
-import json
+
 import pytest
 
 from cerebra.adapters.fixtures.fixture_adapter import (
-    FixtureVideoReader, FixtureChannelReader, FixtureUserLibraryReader, FixturePlaylistWriter,
+    FixturePlaylistWriter,
+    FixtureVideoReader,
 )
 from cerebra.domain.errors import CerebraError, ErrorCode
 
@@ -17,13 +19,21 @@ from cerebra.domain.errors import CerebraError, ErrorCode
 def _build_fixture_video_reader_with_data():
     r = FixtureVideoReader.__new__(FixtureVideoReader)
     from cerebra.adapters.fixtures.fixture_adapter import _dict_to_video
+
     r._videos = {
-        "dQw4w9WgXcQ": _dict_to_video({
-            "video_id": "dQw4w9WgXcQ", "title": "Test Video", "description": "A test video",
-            "channel_id": "UCuAXFkgsw1L7xaCfnd5JJOw", "channel_title": "Test Channel",
-            "duration_seconds": 213, "category_id": "10", "language": "en",
-            "tags": ["test", "music"],
-        })
+        "dQw4w9WgXcQ": _dict_to_video(
+            {
+                "video_id": "dQw4w9WgXcQ",
+                "title": "Test Video",
+                "description": "A test video",
+                "channel_id": "UCuAXFkgsw1L7xaCfnd5JJOw",
+                "channel_title": "Test Channel",
+                "duration_seconds": 213,
+                "category_id": "10",
+                "language": "en",
+                "tags": ["test", "music"],
+            }
+        )
     }
     return r
 
@@ -36,9 +46,7 @@ class VideoReaderContractTests:
         raise NotImplementedError
 
     def test_get_known_video_returns_metadata(self, reader):
-        video = asyncio.get_event_loop().run_until_complete(
-            reader.get_video("dQw4w9WgXcQ")
-        )
+        video = asyncio.get_event_loop().run_until_complete(reader.get_video("dQw4w9WgXcQ"))
         assert video.video_id == "dQw4w9WgXcQ"
         assert video.title
         assert video.duration_seconds > 0
@@ -51,9 +59,7 @@ class VideoReaderContractTests:
         assert exc.value.code == ErrorCode.VIDEO_NOT_FOUND_OR_PRIVATE
 
     def test_get_videos_batch_returns_known(self, reader):
-        videos = asyncio.get_event_loop().run_until_complete(
-            reader.get_videos(["dQw4w9WgXcQ"])
-        )
+        videos = asyncio.get_event_loop().run_until_complete(reader.get_videos(["dQw4w9WgXcQ"]))
         assert len(videos) == 1
 
     def test_get_videos_batch_omits_missing(self, reader):
@@ -102,9 +108,7 @@ class PlaylistWriterContractTests:
             writer.create_playlist("Test", "", "private")
         )
         # Should not raise
-        asyncio.get_event_loop().run_until_complete(
-            writer.add_playlist_item(pid, "dQw4w9WgXcQ", 0)
-        )
+        asyncio.get_event_loop().run_until_complete(writer.add_playlist_item(pid, "dQw4w9WgXcQ", 0))
 
 
 class TestFixturePlaylistWriterContract(PlaylistWriterContractTests):

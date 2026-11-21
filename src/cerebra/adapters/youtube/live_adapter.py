@@ -16,6 +16,7 @@ Hard rules enforced here
   * Reads need ``youtube.readonly``; writes need ``youtube`` (ADR-D).
   * Video/channel text is returned as data; nothing is interpreted (FR-4.10).
 """
+
 from __future__ import annotations
 
 import asyncio
@@ -47,16 +48,22 @@ from cerebra.domain.quota import QUOTA_COSTS, QuotaLedger
 from cerebra.infrastructure.auth.oauth_manager import SCOPE_READONLY, SCOPE_WRITE
 from cerebra.ports.interfaces import Clock
 
-READ_METHODS = frozenset({
-    "videos.list", "channels.list", "search.list",
-    "playlistItems.list", "playlists.list", "subscriptions.list",
-})
+READ_METHODS = frozenset(
+    {
+        "videos.list",
+        "channels.list",
+        "search.list",
+        "playlistItems.list",
+        "playlists.list",
+        "subscriptions.list",
+    }
+)
 WRITE_METHODS = frozenset({"playlists.insert", "playlistItems.insert"})
 ALLOWED_METHODS = READ_METHODS | WRITE_METHODS
 
-PAGE_SIZE = 50                 # API maximum for maxResults on list endpoints
-MAX_SEARCH_PAGES = 2           # matches ADR-B / estimate_playlist_workflow (2 search pages)
-LIKED_VIDEO_API_CAP = 1000     # the API does not expose more than ~1,000 liked videos
+PAGE_SIZE = 50  # API maximum for maxResults on list endpoints
+MAX_SEARCH_PAGES = 2  # matches ADR-B / estimate_playlist_workflow (2 search pages)
+LIKED_VIDEO_API_CAP = 1000  # the API does not expose more than ~1,000 liked videos
 MAX_QUERY_LEN = 500
 
 _PLAYLIST_ID_RE = re.compile(r"^[A-Za-z0-9_-]{10,64}$")
@@ -88,10 +95,12 @@ def default_service_factory(credentials: Any, api_key: str) -> Any:
     from googleapiclient.discovery import build
 
     if credentials is not None:
-        return build("youtube", "v3", credentials=credentials,
-                     cache_discovery=False, static_discovery=True)
-    return build("youtube", "v3", developerKey=api_key,
-                 cache_discovery=False, static_discovery=True)
+        return build(
+            "youtube", "v3", credentials=credentials, cache_discovery=False, static_discovery=True
+        )
+    return build(
+        "youtube", "v3", developerKey=api_key, cache_discovery=False, static_discovery=True
+    )
 
 
 class LiveYouTubeAdapter:
@@ -195,8 +204,9 @@ class LiveYouTubeAdapter:
             if status == 429 or (status == 403 and reason in _RATE_REASONS) or status >= 500:
                 return transient_error(f"HTTP {status} {reason}".strip()), True
             return youtube_api_error(status, reason), True
-        if isinstance(exc, (TimeoutError, socket.timeout, ConnectionError, ssl.SSLError, OSError)) \
-                or type(exc).__name__ in ("HttpLib2Error", "ServerNotFoundError"):
+        if isinstance(
+            exc, (TimeoutError, socket.timeout, ConnectionError, ssl.SSLError, OSError)
+        ) or type(exc).__name__ in ("HttpLib2Error", "ServerNotFoundError"):
             return transient_error(f"network failure ({type(exc).__name__})"), True
         return transient_error(f"unexpected {type(exc).__name__}"), True
 
@@ -248,18 +258,19 @@ class LiveYouTubeAdapter:
         pages = min(MAX_SEARCH_PAGES, -(-max_results // PAGE_SIZE))
         for _ in range(pages):
             kwargs: dict[str, Any] = {
-                "part": "snippet", "type": "video", "q": q,
+                "part": "snippet",
+                "type": "video",
+                "q": q,
                 "maxResults": min(PAGE_SIZE, max_results - len(ids)),
             }
             if language:
                 kwargs["relevanceLanguage"] = language.split("-")[0].lower()
             if token:
                 kwargs["pageToken"] = token
-            resp = await self._execute(
-                "search.list", lambda s, kw=kwargs: s.search().list(**kw)
-            )
+            resp = await self._execute("search.list", lambda s, kw=kwargs: s.search().list(**kw))
             ids.extend(
-                i["id"]["videoId"] for i in resp.get("items", [])
+                i["id"]["videoId"]
+                for i in resp.get("items", [])
                 if isinstance(i.get("id"), dict) and i["id"].get("videoId")
             )
             token = resp.get("nextPageToken")
@@ -281,16 +292,15 @@ class LiveYouTubeAdapter:
             "channels.list",
             lambda s: s.channels().list(
                 part="snippet,statistics,topicDetails,brandingSettings,contentDetails",
-                id=channel_id, maxResults=1,
+                id=channel_id,
+                maxResults=1,
             ),
         )
         items = resp.get("items", [])
         if not items:
             raise channel_not_found(channel_id)
         base = channel_from_resource(items[0])
-        uploads = (
-            items[0].get("contentDetails", {}).get("relatedPlaylists", {}).get("uploads", "")
-        )
+        uploads = items[0].get("contentDetails", {}).get("relatedPlaylists", {}).get("uploads", "")
         titles: list[str] = []
         stamps: list[str] = []
         if uploads:
@@ -306,8 +316,12 @@ class LiveYouTubeAdapter:
                     titles.append(str(sn.get("title", "")))
                     stamps.append(str(sn.get("publishedAt", "")))
             except CerebraError as exc:
-                if exc.code.value in ("QUOTA_BUDGET_EXCEEDED", "QUOTA_EXHAUSTED", "AUTH_REQUIRED",
-                                      "AUTH_EXPIRED"):
+                if exc.code.value in (
+                    "QUOTA_BUDGET_EXCEEDED",
+                    "QUOTA_EXHAUSTED",
+                    "AUTH_REQUIRED",
+                    "AUTH_EXPIRED",
+                ):
                     raise
                 # Channel without a readable uploads playlist: metadata is still valid.
         return replace(
@@ -354,7 +368,8 @@ class LiveYouTubeAdapter:
                 "channels.list",
                 lambda s, b=batch: s.channels().list(
                     part="snippet,statistics,topicDetails,brandingSettings",
-                    id=",".join(b), maxResults=PAGE_SIZE,
+                    id=",".join(b),
+                    maxResults=PAGE_SIZE,
                 ),
             )
             by_id = {c.channel_id: c for c in map(channel_from_resource, resp.get("items", []))}
@@ -372,7 +387,8 @@ class LiveYouTubeAdapter:
             ),
         )
         return [
-            i["id"]["channelId"] for i in resp.get("items", [])
+            i["id"]["channelId"]
+            for i in resp.get("items", [])
             if isinstance(i.get("id"), dict) and i["id"].get("channelId")
         ][:max_results]
 
@@ -385,7 +401,8 @@ class LiveYouTubeAdapter:
         token: str | None = None
         while len(out) < limit:
             kwargs: dict[str, Any] = {
-                "part": "snippet,contentDetails", "myRating": "like",
+                "part": "snippet,contentDetails",
+                "myRating": "like",
                 "maxResults": min(PAGE_SIZE, limit - len(out)),
             }
             if token:
@@ -404,23 +421,28 @@ class LiveYouTubeAdapter:
         token: str | None = None
         while len(out) < max_results:
             kwargs: dict[str, Any] = {
-                "part": "snippet", "mine": True,
+                "part": "snippet",
+                "mine": True,
                 "maxResults": min(PAGE_SIZE, max_results - len(out)),
             }
             if token:
                 kwargs["pageToken"] = token
             resp = await self._execute(
-                "subscriptions.list", lambda s, kw=kwargs: s.subscriptions().list(**kw),
+                "subscriptions.list",
+                lambda s, kw=kwargs: s.subscriptions().list(**kw),
                 need_user=True,
             )
             for it in resp.get("items", []):
                 sn = it.get("snippet", {})
                 cid = sn.get("resourceId", {}).get("channelId", "")
                 if cid:
-                    out.append(ChannelMetadata(
-                        channel_id=cid, title=str(sn.get("title", "")),
-                        description=str(sn.get("description", "")),
-                    ))
+                    out.append(
+                        ChannelMetadata(
+                            channel_id=cid,
+                            title=str(sn.get("title", "")),
+                            description=str(sn.get("description", "")),
+                        )
+                    )
             token = resp.get("nextPageToken")
             if not token:
                 break
@@ -431,7 +453,8 @@ class LiveYouTubeAdapter:
         token: str | None = None
         while len(out) < max_results:
             kwargs: dict[str, Any] = {
-                "part": "snippet,contentDetails,status", "mine": True,
+                "part": "snippet,contentDetails,status",
+                "mine": True,
                 "maxResults": min(PAGE_SIZE, max_results - len(out)),
             }
             if token:
@@ -441,14 +464,16 @@ class LiveYouTubeAdapter:
             )
             for it in resp.get("items", []):
                 sn = it.get("snippet", {})
-                out.append({
-                    "id": it.get("id", ""),
-                    "title": sn.get("title", ""),
-                    "description": sn.get("description", ""),
-                    "item_count": it.get("contentDetails", {}).get("itemCount", 0),
-                    "published_at": sn.get("publishedAt", ""),
-                    "privacy_status": it.get("status", {}).get("privacyStatus", ""),
-                })
+                out.append(
+                    {
+                        "id": it.get("id", ""),
+                        "title": sn.get("title", ""),
+                        "description": sn.get("description", ""),
+                        "item_count": it.get("contentDetails", {}).get("itemCount", 0),
+                        "published_at": sn.get("publishedAt", ""),
+                        "privacy_status": it.get("status", {}).get("privacyStatus", ""),
+                    }
+                )
             token = resp.get("nextPageToken")
             if not token:
                 break
@@ -486,7 +511,9 @@ class LiveYouTubeAdapter:
         resp = await self._execute(
             "playlists.insert",
             lambda s: s.playlists().insert(part="snippet,status", body=body),
-            scope=SCOPE_WRITE, need_user=True, retry=False,
+            scope=SCOPE_WRITE,
+            need_user=True,
+            retry=False,
         )
         playlist_id = str(resp.get("id", ""))
         if not playlist_id:
@@ -507,7 +534,9 @@ class LiveYouTubeAdapter:
         await self._execute(
             "playlistItems.insert",
             lambda s: s.playlistItems().insert(part="snippet", body=body),
-            scope=SCOPE_WRITE, need_user=True, retry=False,
+            scope=SCOPE_WRITE,
+            need_user=True,
+            retry=False,
         )
 
     # ═════════════════════════ account binding (ADR-A §2) ═════════════════════════
@@ -550,18 +579,21 @@ class LiveYouTubeAdapter:
         token: str | None = None
         while len(out) < max_results:
             kwargs: dict[str, Any] = {
-                "part": "snippet,contentDetails", "playlistId": playlist_id,
+                "part": "snippet,contentDetails",
+                "playlistId": playlist_id,
                 "maxResults": min(PAGE_SIZE, max_results - len(out)),
             }
             if token:
                 kwargs["pageToken"] = token
             resp = await self._execute(
-                "playlistItems.list", lambda s, kw=kwargs: s.playlistItems().list(**kw),
+                "playlistItems.list",
+                lambda s, kw=kwargs: s.playlistItems().list(**kw),
                 need_user=need_user,
             )
             for it in resp.get("items", []):
-                vid = it.get("contentDetails", {}).get("videoId") or \
-                    it.get("snippet", {}).get("resourceId", {}).get("videoId", "")
+                vid = it.get("contentDetails", {}).get("videoId") or it.get("snippet", {}).get(
+                    "resourceId", {}
+                ).get("videoId", "")
                 if vid:
                     out.append((str(vid), str(it.get("snippet", {}).get("publishedAt", ""))))
             token = resp.get("nextPageToken")
@@ -572,6 +604,7 @@ class LiveYouTubeAdapter:
 
 # ═════════════════════════ mapping functions (pure) ═════════════════════════
 
+
 def video_from_resource(item: dict[str, Any]) -> VideoMetadata:
     sn = item.get("snippet", {})
     try:
@@ -581,9 +614,7 @@ def video_from_resource(item: dict[str, Any]) -> VideoMetadata:
     tags = [str(t) for t in sn.get("tags", []) if isinstance(t, str)]
     lang = str(sn.get("defaultAudioLanguage") or sn.get("defaultLanguage") or "")
     thumbs = sn.get("thumbnails", {})
-    thumb = next(
-        (thumbs[k]["url"] for k in ("medium", "high", "default") if k in thumbs), ""
-    )
+    thumb = next((thumbs[k]["url"] for k in ("medium", "high", "default") if k in thumbs), "")
     return VideoMetadata(
         video_id=str(item.get("id", "")),
         title=str(sn.get("title", "")),
@@ -659,7 +690,7 @@ def _clean_text(text: str, limit: int) -> str:
 
 def _chunks(seq: list[str], n: int) -> Iterable[list[str]]:
     for i in range(0, len(seq), n):
-        yield seq[i:i + n]
+        yield seq[i : i + n]
 
 
 def _http_status_reason(exc: Exception) -> tuple[int | None, str]:

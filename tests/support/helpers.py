@@ -1,8 +1,10 @@
 """Shared test helpers (no global event-loop state is touched)."""
+
 from __future__ import annotations
 
 import asyncio
-from typing import Any, Coroutine, Optional, TypeVar
+from collections.abc import Coroutine
+from typing import Any, TypeVar
 
 from cerebra.adapters.youtube.live_adapter import LiveYouTubeAdapter
 from cerebra.domain.quota import QuotaLedger
@@ -22,7 +24,7 @@ def run(coro: Coroutine[Any, Any, T]) -> T:
 
 
 class FakeCreds:
-    token = "fake-access-token"  # noqa: S105 - test double, not a credential
+    token = "fake-access-token"
 
 
 class FakeAuth:
@@ -56,16 +58,21 @@ class NoSleep:
 def make_live(
     fake: FakeYouTube,
     *,
-    quota: Optional[QuotaLedger] = None,
-    auth: Optional[FakeAuth] = None,
+    quota: QuotaLedger | None = None,
+    auth: FakeAuth | None = None,
     api_key: str = "",
-    sleep: Optional[NoSleep] = None,
+    sleep: NoSleep | None = None,
 ) -> tuple[LiveYouTubeAdapter, QuotaLedger, FakeAuth, NoSleep]:
     q = quota or QuotaLedger(general_budget=10_000, search_budget=100)
     a = auth if auth is not None else FakeAuth()
     s = sleep or NoSleep()
     adapter = LiveYouTubeAdapter(
-        q, FakeClock(timestamp=1_700_000_000.0), a, api_key=api_key,
-        service_factory=lambda creds, key: fake, sleep=s, backoff_base_s=0.5,
+        q,
+        FakeClock(timestamp=1_700_000_000.0),
+        a,
+        api_key=api_key,
+        service_factory=lambda creds, key: fake,
+        sleep=s,
+        backoff_base_s=0.5,
     )
     return adapter, q, a, s

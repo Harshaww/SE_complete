@@ -1,4 +1,5 @@
 """Unit tests for domain/duration.py (FR-4.2, ISO 8601 parsing)."""
+
 import pytest
 
 from cerebra.domain.duration import parse_duration, seconds_to_iso8601

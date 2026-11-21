@@ -1,4 +1,5 @@
 """LiveYouTubeAdapter behaviour: quota, errors, writes, CON-1/NFR-SA-2 (no network used)."""
+
 # mark: CON-1, FR-5.8, NFR-SA-2, CON-5
 from __future__ import annotations
 
@@ -64,14 +65,17 @@ class TestQuotaBeforeEveryCall:
 
 # mark: CON-1, FR-5.8, NFR-SA-2, CON-5
 class TestErrorMapping:
-    @pytest.mark.parametrize("status,reason,expected", [
-        (401, "authError", ErrorCode.AUTH_EXPIRED),
-        (403, "quotaExceeded", ErrorCode.QUOTA_EXHAUSTED),
-        (403, "dailyLimitExceeded", ErrorCode.QUOTA_EXHAUSTED),
-        (403, "insufficientPermissions", ErrorCode.INSUFFICIENT_SCOPE),
-        (400, "badRequest", ErrorCode.YOUTUBE_API_ERROR),
-        (404, "notFound", ErrorCode.YOUTUBE_API_ERROR),
-    ])
+    @pytest.mark.parametrize(
+        "status,reason,expected",
+        [
+            (401, "authError", ErrorCode.AUTH_EXPIRED),
+            (403, "quotaExceeded", ErrorCode.QUOTA_EXHAUSTED),
+            (403, "dailyLimitExceeded", ErrorCode.QUOTA_EXHAUSTED),
+            (403, "insufficientPermissions", ErrorCode.INSUFFICIENT_SCOPE),
+            (400, "badRequest", ErrorCode.YOUTUBE_API_ERROR),
+            (404, "notFound", ErrorCode.YOUTUBE_API_ERROR),
+        ],
+    )
     def test_definitive_errors_not_retried(self, status, reason, expected):
         fake = fixture_backed_fake()
         fake.errors["videos.list"] = [http_error(status, reason)]
@@ -135,7 +139,9 @@ class TestWritesNeverRetried:
         fake = fixture_backed_fake()
         fake.errors["playlistItems.insert"] = [TimeoutError()] * 3
         adapter, _, _, _ = make_live(fake)
-        assert code_of(adapter.add_playlist_item("PL0123456789", RICK, 0)) == ErrorCode.TRANSIENT_ERROR
+        assert (
+            code_of(adapter.add_playlist_item("PL0123456789", RICK, 0)) == ErrorCode.TRANSIENT_ERROR
+        )
         assert fake.method_names() == ["playlistItems.insert"]
 
 
@@ -148,7 +154,7 @@ class TestWriteRequests:
         pid = run(adapter.create_playlist("My <b>list</b>", "desc <x>", "unlisted"))
         name, kw = fake.calls[-1]
         assert name == "playlists.insert" and kw["part"] == "snippet,status"
-        assert kw["body"]["snippet"]["title"] == "My blist/b"       # '<' '>' stripped
+        assert kw["body"]["snippet"]["title"] == "My blist/b"  # '<' '>' stripped
         assert kw["body"]["status"]["privacyStatus"] == "unlisted"
         assert pid in fake.pl_store
         assert auth.scopes_requested[-1] == SCOPE_WRITE
@@ -172,14 +178,19 @@ class TestWriteRequests:
         pid = run(adapter.create_playlist("t", "d", "private"))
         run(adapter.add_playlist_item(pid, RICK, 0))
         sn = fake.calls[-1][1]["body"]["snippet"]
-        assert sn == {"playlistId": pid, "position": 0,
-                      "resourceId": {"kind": "youtube#video", "videoId": RICK}}
+        assert sn == {
+            "playlistId": pid,
+            "position": 0,
+            "resourceId": {"kind": "youtube#video", "videoId": RICK},
+        }
 
     def test_invalid_ids_rejected_before_any_call(self):
         fake = fixture_backed_fake()
         adapter, _, _, _ = make_live(fake)
-        assert code_of(adapter.add_playlist_item("PL0123456789", "bad id!", 0)) \
+        assert (
+            code_of(adapter.add_playlist_item("PL0123456789", "bad id!", 0))
             == ErrorCode.YOUTUBE_API_ERROR
+        )
         assert fake.calls == []
 
     def test_ensure_write_access_requests_write_scope(self):
@@ -190,6 +201,7 @@ class TestWriteRequests:
     def test_ensure_write_access_without_auth(self):
         from cerebra.adapters.youtube.live_adapter import LiveYouTubeAdapter
         from cerebra.infrastructure.clock import FakeClock
+
         adapter = LiveYouTubeAdapter(QuotaLedger(), FakeClock(0.0), None)
         assert code_of(adapter.ensure_write_access()) == ErrorCode.AUTH_REQUIRED
 
@@ -222,8 +234,11 @@ class TestReadBehaviour:
 
     def test_search_pagination_capped_at_two_pages(self):
         from cerebra.domain.entities import VideoMetadata
-        vids = [VideoMetadata(f"vid{i:08d}", "python tutorial", "", CH, "c", 60, "27", "en")
-                for i in range(200)]
+
+        vids = [
+            VideoMetadata(f"vid{i:08d}", "python tutorial", "", CH, "c", 60, "27", "en")
+            for i in range(200)
+        ]
         fake = FakeYouTube(vids, [])
         adapter, q, _, _ = make_live(fake)
         res = run(adapter.search_videos("python", max_results=200))
@@ -281,7 +296,10 @@ class TestReadBehaviour:
 
     def test_liked_capped_at_api_limit(self):
         from cerebra.domain.entities import VideoMetadata
-        liked = [VideoMetadata(f"lik{i:08d}", "t", "", CH, "c", 60, "27", "en") for i in range(1200)]
+
+        liked = [
+            VideoMetadata(f"lik{i:08d}", "t", "", CH, "c", 60, "27", "en") for i in range(1200)
+        ]
         fake = FakeYouTube(liked, [], liked=liked)
         adapter, _, _, _ = make_live(fake)
         res = run(adapter.get_liked_videos(max_results=5000))
@@ -311,22 +329,33 @@ class TestReadBehaviour:
 # mark: CON-1, FR-5.8, NFR-SA-2, CON-5
 class TestPureMappers:
     def test_video_mapping_edge_cases(self):
-        v = la.video_from_resource({"id": "abcdefghijk", "snippet": {"title": "t",
-                                    "defaultLanguage": "en-GB"},
-                                    "contentDetails": {"duration": "P0D"}})
+        v = la.video_from_resource(
+            {
+                "id": "abcdefghijk",
+                "snippet": {"title": "t", "defaultLanguage": "en-GB"},
+                "contentDetails": {"duration": "P0D"},
+            }
+        )
         assert v.duration_seconds == 0 and v.language == "en" and v.tags_missing
         bad = la.video_from_resource({"id": "x", "contentDetails": {"duration": "garbage"}})
         assert bad.duration_seconds == 0
 
     def test_hidden_subscriber_count_is_none(self):
-        c = la.channel_from_resource({"id": "UC1", "snippet": {},
-                                      "statistics": {"hiddenSubscriberCount": True,
-                                                     "subscriberCount": "5"}})
+        c = la.channel_from_resource(
+            {
+                "id": "UC1",
+                "snippet": {},
+                "statistics": {"hiddenSubscriberCount": True, "subscriberCount": "5"},
+            }
+        )
         assert c.subscriber_count is None
 
     def test_keyword_parsing_quoted_phrases(self):
-        assert la._parse_keywords('python "machine learning" ai') == \
-            ["python", "machine learning", "ai"]
+        assert la._parse_keywords('python "machine learning" ai') == [
+            "python",
+            "machine learning",
+            "ai",
+        ]
 
     def test_cadence(self):
         assert la._cadence_per_month([]) == 0.0
@@ -342,10 +371,13 @@ class TestOfficialApiOnly:
     def test_only_allowed_methods_ever_called(self):
         fake = fixture_backed_fake()
         adapter, _, _, _ = make_live(fake)
-        run(adapter.search_videos("rick")); run(adapter.get_channel(CH))
-        run(adapter.get_liked_videos()); run(adapter.get_subscriptions())
+        run(adapter.search_videos("rick"))
+        run(adapter.get_channel(CH))
+        run(adapter.get_liked_videos())
+        run(adapter.get_subscriptions())
         pid = run(adapter.create_playlist("t", "d", "private"))
-        run(adapter.add_playlist_item(pid, RICK, 0)); run(adapter.get_playlists())
+        run(adapter.add_playlist_item(pid, RICK, 0))
+        run(adapter.get_playlists())
         assert set(fake.method_names()) <= la.ALLOWED_METHODS
 
     def test_source_has_no_edit_delete_or_scraping(self):
@@ -353,15 +385,22 @@ class TestOfficialApiOnly:
         tree = ast.parse(src)
         attrs = {n.attr for n in ast.walk(tree) if isinstance(n, ast.Attribute)}
         assert not attrs & {"update", "delete", "rate", "setThumbnail", "markAsSpam"}
-        imported = {a.name.split(".")[0] for n in ast.walk(tree)
-                    if isinstance(n, ast.Import) for a in n.names}
-        imported |= {n.module.split(".")[0] for n in ast.walk(tree)
-                     if isinstance(n, ast.ImportFrom) and n.module}
+        imported = {
+            a.name.split(".")[0]
+            for n in ast.walk(tree)
+            if isinstance(n, ast.Import)
+            for a in n.names
+        }
+        imported |= {
+            n.module.split(".")[0]
+            for n in ast.walk(tree)
+            if isinstance(n, ast.ImportFrom) and n.module
+        }
         assert not imported & {"requests", "urllib", "httpx", "bs4", "selenium", "pytube", "yt_dlp"}
         assert "videos.insert" not in src  # quota modelling only, never invoked
 
     def test_write_methods_are_exactly_two(self):
-        assert la.WRITE_METHODS == {"playlists.insert", "playlistItems.insert"}
+        assert {"playlists.insert", "playlistItems.insert"} == la.WRITE_METHODS
 
     def test_real_client_targets_official_googleapis_host(self):
         svc = la.default_service_factory(None, "dummy-key")

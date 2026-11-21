@@ -67,7 +67,18 @@ src = ["src"]
 
 [tool.ruff.lint]
 select = ["E", "F", "W", "I", "N", "UP", "S", "B", "A", "C4", "T20", "SIM", "RUF"]
-ignore = ["S101", "S603", "S607"]
+ignore = [
+  "S101", "S603", "S607",
+  "E501",    # line length is owned by `ruff format`; remaining hits are long message strings
+  "UP042",   # str+Enum kept on purpose: str() / JSON behaviour is part of the API (FR-5.15)
+  "RUF001", "RUF002", "RUF003",  # typographic dashes/quotes in docs are intentional
+]
+
+[tool.ruff.lint.per-file-ignores]
+"tests/**" = [
+  "S105", "S106", "S107",  # fake tokens in test data (never real secrets, NFR-SE-2)
+  "S311", "T201", "N802", "N805", "RUF012", "RUF059", "B905", "SIM115",
+]
 
 [tool.mypy]
 python_version = "3.12"

@@ -9,6 +9,7 @@ Responsibilities
 
 Nothing here prints to stdout: stdout carries MCP JSON-RPC. Human-facing text goes to stderr.
 """
+
 from __future__ import annotations
 
 import contextlib
@@ -288,6 +289,7 @@ class OAuthManager:
 
 
 # ── Library glue (isolated so tests inject fakes; no network at import) ──────
+
 
 def _credentials_from_info(info: dict[str, Any]) -> Any:
     from google.oauth2.credentials import Credentials

@@ -12,6 +12,7 @@ crash) it first READS remote state:
 The proposal was already human-approved and consumed; recovery can only finish THAT approved
 item set — it never adds anything new, and never edits or deletes (NFR-SA-2).
 """
+
 from __future__ import annotations
 
 from cerebra.application.playlist import AccountIdProvider
@@ -81,8 +82,11 @@ class RecoverPlaylistUseCase:
         remaining_items = [
             i for i in proposal.items if proposal.item_states.get(i.video_id) != "INSERTED"
         ]
-        needed = 2 + len(remaining_items) * QUOTA_COSTS["playlistItems.insert"] \
+        needed = (
+            2
+            + len(remaining_items) * QUOTA_COSTS["playlistItems.insert"]
             + (QUOTA_COSTS["playlists.insert"] if not proposal.playlist_id else 0)
+        )
         if not self._quota.can_afford(general=needed):
             raise quota_budget_exceeded(needed, self._quota.general_remaining)
 
@@ -103,21 +107,22 @@ class RecoverPlaylistUseCase:
                 notes.append(
                     "found existing playlist on YouTube; adopted it (no duplicate created)"
                 )
-                self._audit.log_event(proposal_id, playlist_id, "recovered:playlist_found",
-                                      self._clock.utcnow_iso())
+                self._audit.log_event(
+                    proposal_id, playlist_id, "recovered:playlist_found", self._clock.utcnow_iso()
+                )
             else:
                 playlist_id = await self._writer.create_playlist(
                     title=proposal.topic,
                     description=(
-                        f"Created by Cerebra from proposal {proposal_id}. "
-                        f"Topic: {proposal.topic}"
+                        f"Created by Cerebra from proposal {proposal_id}. Topic: {proposal.topic}"
                     ),
                     privacy_status=proposal.privacy_status.value,
                 )
                 self._quota.consume("playlists.insert", 1)
                 notes.append("playlist was not on YouTube; created it once")
-                self._audit.log_event(proposal_id, playlist_id, "recovered:playlist_created",
-                                      self._clock.utcnow_iso())
+                self._audit.log_event(
+                    proposal_id, playlist_id, "recovered:playlist_created", self._clock.utcnow_iso()
+                )
             self._store.update_state(proposal_id, playlist_id=playlist_id)
 
         # 2. Read remote items; adopt whatever is already there
@@ -128,7 +133,7 @@ class RecoverPlaylistUseCase:
             if item.video_id in remote_ids:
                 item_states[item.video_id] = "INSERTED"
             elif item_states.get(item.video_id) == "INSERTED":
-                item_states[item.video_id] = "PENDING"   # claimed but not actually there
+                item_states[item.video_id] = "PENDING"  # claimed but not actually there
         self._store.update_state(proposal_id, item_states=dict(item_states))
 
         # 3. Insert only what is missing, once each, appended in order
@@ -145,12 +150,16 @@ class RecoverPlaylistUseCase:
                 item_states[item.video_id] = "FAILED"
                 self._store.update_state(proposal_id, item_states=dict(item_states))
                 self._audit.log_event(
-                    proposal_id, playlist_id, f"recover_failed:{item.video_id}",
+                    proposal_id,
+                    playlist_id,
+                    f"recover_failed:{item.video_id}",
                     self._clock.utcnow_iso(),
                 )
                 if isinstance(exc, CerebraError) and exc.code in (
-                    ErrorCode.QUOTA_EXHAUSTED, ErrorCode.QUOTA_BUDGET_EXCEEDED,
-                    ErrorCode.AUTH_REQUIRED, ErrorCode.AUTH_EXPIRED,
+                    ErrorCode.QUOTA_EXHAUSTED,
+                    ErrorCode.QUOTA_BUDGET_EXCEEDED,
+                    ErrorCode.AUTH_REQUIRED,
+                    ErrorCode.AUTH_EXPIRED,
                     ErrorCode.INSUFFICIENT_SCOPE,
                 ):
                     break
@@ -163,23 +172,31 @@ class RecoverPlaylistUseCase:
         failed = [i.video_id for i in proposal.items if item_states.get(i.video_id) != "INSERTED"]
         url = f"https://www.youtube.com/playlist?list={playlist_id}"
         if failed:
-            self._store.update_state(
-                proposal_id, failed_item_ids=failed, playlist_url=url
-            )
+            self._store.update_state(proposal_id, failed_item_ids=failed, playlist_url=url)
             return {
-                "status": "PARTIAL", "playlist_id": playlist_id, "playlist_url": url,
-                "failed_video_ids": failed, "notes": notes,
+                "status": "PARTIAL",
+                "playlist_id": playlist_id,
+                "playlist_url": url,
+                "failed_video_ids": failed,
+                "notes": notes,
                 "message": "Some items are still missing; run recover again later.",
             }
         self._store.update_state(
-            proposal_id, state=ProposalState.CREATED, failed_item_ids=[],
-            playlist_url=url, ambiguous=False,
+            proposal_id,
+            state=ProposalState.CREATED,
+            failed_item_ids=[],
+            playlist_url=url,
+            ambiguous=False,
         )
-        self._audit.log_event(proposal_id, playlist_id, "recovered:created",
-                              self._clock.utcnow_iso())
+        self._audit.log_event(
+            proposal_id, playlist_id, "recovered:created", self._clock.utcnow_iso()
+        )
         return {
-            "status": "CREATED", "playlist_id": playlist_id, "playlist_url": url,
-            "video_count": len(proposal.items), "notes": notes,
+            "status": "CREATED",
+            "playlist_id": playlist_id,
+            "playlist_url": url,
+            "video_count": len(proposal.items),
+            "notes": notes,
         }
 
     async def _find_remote_playlist(self, proposal_id: str) -> str | None:

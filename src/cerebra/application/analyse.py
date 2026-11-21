@@ -1,9 +1,9 @@
 """Application use case: analyse_engagement (FR-3)."""
+
 from __future__ import annotations
 
 import statistics
 from collections import Counter, defaultdict
-from typing import Optional
 
 from cerebra.config import Config
 from cerebra.domain.entities import DurationBand, VideoMetadata
@@ -50,8 +50,8 @@ class AnalyseEngagementUseCase:
     async def analyse(
         self,
         top_k: int = 5,
-        period_a: Optional[tuple[str, str]] = None,
-        period_b: Optional[tuple[str, str]] = None,
+        period_a: tuple[str, str] | None = None,
+        period_b: tuple[str, str] | None = None,
     ) -> dict[str, object]:
         """FR-3.1 to FR-3.8: engagement analysis."""
         # FR-3.1
@@ -98,8 +98,7 @@ class AnalyseEngagementUseCase:
 
         all_channel_ids = set(channel_liked_counts) | set(channel_playlist_counts)
         channel_scores = {
-            cid: channel_liked_counts[cid] + channel_playlist_counts[cid]
-            for cid in all_channel_ids
+            cid: channel_liked_counts[cid] + channel_playlist_counts[cid] for cid in all_channel_ids
         }
         top_channels = sorted(channel_scores.items(), key=lambda x: -x[1])[:top_k]
 
@@ -121,8 +120,7 @@ class AnalyseEngagementUseCase:
             if v.category_id:
                 cat_counts[v.category_id] += 1
         top_categories = [
-            {"category_id": cid, "count": cnt}
-            for cid, cnt in cat_counts.most_common(top_k)
+            {"category_id": cid, "count": cnt} for cid, cnt in cat_counts.most_common(top_k)
         ]
 
         # FR-3.5: duration preferences
@@ -194,6 +192,7 @@ class AnalyseEngagementUseCase:
         top_k: int,
     ) -> dict[str, object]:
         """FR-3.6: compare two periods."""
+
         def in_period(v: VideoMetadata, start: str, end: str) -> bool:
             date = add_dates.get(v.video_id, v.published_at)
             if not date:
@@ -211,8 +210,12 @@ class AnalyseEngagementUseCase:
             durations = [v.duration_seconds for v in videos]
             return {
                 "count": len(videos),
-                "top_channels": [{"channel_id": c, "count": n} for c, n in ch_counts.most_common(top_k)],
-                "top_categories": [{"category_id": c, "count": n} for c, n in cat_counts.most_common(top_k)],
+                "top_channels": [
+                    {"channel_id": c, "count": n} for c, n in ch_counts.most_common(top_k)
+                ],
+                "top_categories": [
+                    {"category_id": c, "count": n} for c, n in cat_counts.most_common(top_k)
+                ],
                 "duration_stats": {
                     "mean_seconds": round(statistics.mean(durations)) if durations else 0,
                     "median_seconds": round(statistics.median(durations)) if durations else 0,

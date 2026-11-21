@@ -3,6 +3,7 @@
 Implements: ProposalStore, CacheStore, AuditLog, QuotaStore.
 All writes are transactional. No global state.
 """
+
 from __future__ import annotations
 
 import json
@@ -10,9 +11,8 @@ import pickle
 import sqlite3
 import threading
 import time
-from dataclasses import asdict
 from pathlib import Path
-from typing import Any, Optional
+from typing import Any
 
 from cerebra.domain.entities import (
     PlaylistItem,
@@ -20,7 +20,6 @@ from cerebra.domain.entities import (
     PrivacyStatus,
     ProposalState,
 )
-from cerebra.ports.interfaces import AuditLog, CacheStore, ProposalStore, QuotaStore
 
 
 class SQLiteDB:
@@ -114,14 +113,17 @@ class SQLiteProposalStore:
         self._db.execute(
             """INSERT OR REPLACE INTO proposals (proposal_id, data, state, created_at, expires_at)
                VALUES (?, ?, ?, ?, ?)""",
-            (proposal.proposal_id, data, proposal.state.value,
-             proposal.created_at, proposal.expires_at),
+            (
+                proposal.proposal_id,
+                data,
+                proposal.state.value,
+                proposal.created_at,
+                proposal.expires_at,
+            ),
         )
 
-    def load(self, proposal_id: str) -> Optional[PlaylistProposal]:
-        rows = self._db.execute(
-            "SELECT data FROM proposals WHERE proposal_id = ?", (proposal_id,)
-        )
+    def load(self, proposal_id: str) -> PlaylistProposal | None:
+        rows = self._db.execute("SELECT data FROM proposals WHERE proposal_id = ?", (proposal_id,))
         if not rows:
             return None
         return self._dict_to_proposal(json.loads(rows[0]["data"]))
@@ -133,9 +135,9 @@ class SQLiteProposalStore:
         # Apply updates
         d = self._proposal_to_dict(proposal)
         for k, v in kwargs.items():
-            if k == "state" and isinstance(v, ProposalState):
-                d[k] = v.value
-            elif k == "privacy_status" and isinstance(v, PrivacyStatus):
+            if (k == "state" and isinstance(v, ProposalState)) or (
+                k == "privacy_status" and isinstance(v, PrivacyStatus)
+            ):
                 d[k] = v.value
             else:
                 d[k] = v
@@ -160,8 +162,12 @@ class SQLiteProposalStore:
             "max_video_duration_seconds": p.max_video_duration_seconds,
             "language": p.language,
             "items": [
-                {"video_id": i.video_id, "title": i.title,
-                 "channel_title": i.channel_title, "duration_seconds": i.duration_seconds}
+                {
+                    "video_id": i.video_id,
+                    "title": i.title,
+                    "channel_title": i.channel_title,
+                    "duration_seconds": i.duration_seconds,
+                }
                 for i in p.items
             ],
             "created_at": p.created_at,
@@ -219,7 +225,7 @@ class SQLiteCacheStore:
         self._db = db
         self._max_size = max_size
 
-    def get(self, key: str) -> Optional[object]:
+    def get(self, key: str) -> object | None:
         rows = self._db.execute(
             "SELECT value_blob FROM cache WHERE key = ? AND expires_at > ?",
             (key, time.time()),
@@ -244,7 +250,9 @@ class SQLiteCacheStore:
         self._db.execute("DELETE FROM cache")
 
     def stats(self) -> dict[str, object]:
-        rows = self._db.execute("SELECT COUNT(*) as cnt FROM cache WHERE expires_at > ?", (time.time(),))
+        rows = self._db.execute(
+            "SELECT COUNT(*) as cnt FROM cache WHERE expires_at > ?", (time.time(),)
+        )
         return {"active_entries": rows[0]["cnt"] if rows else 0, "max_size": self._max_size}
 
     def _evict_if_needed(self) -> None:
@@ -273,10 +281,7 @@ class SQLiteAuditLog:
             (timestamp, proposal_id, playlist_id),
         )
 
-
-    def log_event(
-        self, proposal_id: str, playlist_id: str, event: str, timestamp: str
-    ) -> None:
+    def log_event(self, proposal_id: str, playlist_id: str, event: str, timestamp: str) -> None:
         self._db.execute(
             "INSERT INTO audit_log (timestamp, proposal_id, playlist_id, event) "
             "VALUES (?, ?, ?, ?)",
@@ -290,16 +295,14 @@ class SQLiteApprovalStore:
     def __init__(self, db: SQLiteDB) -> None:
         self._db = db
 
-    def record(
-        self, proposal_id: str, digest: str, account_id: str, approved_at: str
-    ) -> None:
+    def record(self, proposal_id: str, digest: str, account_id: str, approved_at: str) -> None:
         self._db.execute(
             "INSERT OR REPLACE INTO approvals "
             "(proposal_id, digest, account_id, approved_at, used) VALUES (?, ?, ?, ?, 0)",
             (proposal_id, digest, account_id, approved_at),
         )
 
-    def get(self, proposal_id: str) -> Optional[dict[str, str]]:
+    def get(self, proposal_id: str) -> dict[str, str] | None:
         rows = self._db.execute(
             "SELECT proposal_id, digest, account_id, approved_at, used "
             "FROM approvals WHERE proposal_id = ?",
@@ -318,8 +321,8 @@ class SQLiteApprovalStore:
 
     def consume(self, proposal_id: str) -> bool:
         # Single atomic UPDATE: only one caller can flip used 0 -> 1
-        with self._db._lock:  # noqa: SLF001 - same module, keeps check+update atomic
-            conn = self._db._connect()  # noqa: SLF001
+        with self._db._lock:
+            conn = self._db._connect()
             try:
                 cur = conn.execute(
                     "UPDATE approvals SET used = 1 WHERE proposal_id = ? AND used = 0",

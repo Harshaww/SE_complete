@@ -15,6 +15,7 @@ need for the FR-5.8 *up-front* decision:
 
 Everything else (estimates, status, remaining) is delegated to the real ledger.
 """
+
 from __future__ import annotations
 
 from cerebra.domain.quota import QuotaLedger

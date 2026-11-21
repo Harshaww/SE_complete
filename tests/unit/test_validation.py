@@ -1,16 +1,17 @@
 """Unit tests for mcp_tools/validation.py (FR-5.14, NFR-SE-4)."""
+
 import pytest
 
 from cerebra.domain.errors import CerebraError, ErrorCode
 from cerebra.mcp_tools.validation import (
-    validate_reference,
-    validate_limit,
-    validate_topic,
+    validate_digest,
     validate_duration_seconds,
     validate_language,
-    validate_proposal_id,
-    validate_digest,
+    validate_limit,
     validate_privacy_status,
+    validate_proposal_id,
+    validate_reference,
+    validate_topic,
 )
 
 

@@ -1,8 +1,6 @@
 """Unit tests for domain/quota.py (FR-5.6–5.8, NFR-SA-4, TR-6)."""
-import pytest
 
-from cerebra.domain.errors import ErrorCode
-from cerebra.domain.quota import QuotaLedger, QUOTA_COSTS, WARN_THRESHOLD
+from cerebra.domain.quota import QUOTA_COSTS, QuotaLedger
 
 
 class TestQuotaLedger:
@@ -77,6 +75,7 @@ class TestQuotaLedger:
     def test_parallel_reserve_never_overspend(self):
         """Concurrency: parallel reserves must never exceed budget."""
         import threading
+
         q = QuotaLedger(general_budget=1000, search_budget=100)
         successes = []
         lock = threading.Lock()
@@ -100,9 +99,13 @@ class TestQuotaLedger:
 class TestQuotaCosts:
     def test_all_expected_methods_present(self):
         expected = [
-            "search.list", "videos.list", "channels.list",
-            "playlistItems.list", "playlists.list",
-            "playlists.insert", "playlistItems.insert",
+            "search.list",
+            "videos.list",
+            "channels.list",
+            "playlistItems.list",
+            "playlists.list",
+            "playlists.insert",
+            "playlistItems.insert",
         ]
         for method in expected:
             assert method in QUOTA_COSTS, f"Missing cost for {method}"

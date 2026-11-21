@@ -3,9 +3,10 @@
 Each use case depends only on the port(s) it needs.
 Both the live YouTube adapter and the fixture adapter satisfy these contracts.
 """
+
 from __future__ import annotations
 
-from typing import Optional, Protocol, runtime_checkable
+from typing import Protocol, runtime_checkable
 
 from cerebra.domain.entities import (
     ChannelMetadata,
@@ -13,8 +14,8 @@ from cerebra.domain.entities import (
     VideoMetadata,
 )
 
-
 # ── Video / Channel reading ──────────────────────────────────────────────────
+
 
 @runtime_checkable
 class PublicVideoReader(Protocol):
@@ -32,7 +33,7 @@ class PublicVideoReader(Protocol):
         self,
         query: str,
         max_results: int = 25,
-        language: Optional[str] = None,
+        language: str | None = None,
     ) -> list[VideoMetadata]:
         """Search for videos matching query. Uses search.list (costly: 100 units)."""
         ...
@@ -56,9 +57,7 @@ class PublicChannelReader(Protocol):
         """Resolve handle/custom/user to a channel_id. Returns channel_id."""
         ...
 
-    async def search_channels(
-        self, query: str, max_results: int = 25
-    ) -> list[ChannelMetadata]:
+    async def search_channels(self, query: str, max_results: int = 25) -> list[ChannelMetadata]:
         """Search for channels matching query."""
         ...
 
@@ -125,6 +124,7 @@ class PlaylistWriter(Protocol):
 
 # ── Infrastructure ports ─────────────────────────────────────────────────────
 
+
 @runtime_checkable
 class Clock(Protocol):
     """Injected clock for deterministic time (testability)."""
@@ -151,7 +151,7 @@ class ProposalStore(Protocol):
     """Persistent storage for playlist proposals (FR-4.5, ADR-C)."""
 
     def save(self, proposal: PlaylistProposal) -> None: ...
-    def load(self, proposal_id: str) -> Optional[PlaylistProposal]: ...
+    def load(self, proposal_id: str) -> PlaylistProposal | None: ...
     def update_state(self, proposal_id: str, **kwargs: object) -> None: ...
     def list_active(self) -> list[PlaylistProposal]: ...
 
@@ -160,7 +160,7 @@ class ProposalStore(Protocol):
 class CacheStore(Protocol):
     """Cache for YouTube API responses (FR-5.9, NFR-PV-2)."""
 
-    def get(self, key: str) -> Optional[object]: ...
+    def get(self, key: str) -> object | None: ...
     def set(self, key: str, value: object, ttl_seconds: int) -> None: ...
     def delete(self, key: str) -> None: ...
     def clear_all(self) -> None: ...
@@ -172,7 +172,7 @@ class TokenStore(Protocol):
     """Secure token storage (FR-5.2, NFR-SE-3)."""
 
     def save_token(self, token_data: dict[str, object]) -> None: ...
-    def load_token(self) -> Optional[dict[str, object]]: ...
+    def load_token(self) -> dict[str, object] | None: ...
     def delete_token(self) -> None: ...
 
 
@@ -209,16 +209,15 @@ class ApprovalStore(Protocol):
     interactive terminal, records approvals.
     """
 
-    def record(
-        self, proposal_id: str, digest: str, account_id: str, approved_at: str
-    ) -> None: ...
-    def get(self, proposal_id: str) -> Optional[dict[str, str]]: ...
+    def record(self, proposal_id: str, digest: str, account_id: str, approved_at: str) -> None: ...
+    def get(self, proposal_id: str) -> dict[str, str] | None: ...
     def consume(self, proposal_id: str) -> bool:
         """Atomically mark an approval as used. Returns False if absent/already used."""
         ...
 
 
 # ── Aggregate VideoProvider (for SRS traceability, FR-5.17) ──────────────────
+
 
 class VideoProvider:
     """Aggregate provider holding all sub-readers and writer.

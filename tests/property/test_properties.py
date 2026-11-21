@@ -3,18 +3,20 @@
 Exactly 5 required tests. Uses >= 3 of 4 lab patterns.
 Each test has a one-sentence comment stating the property.
 """
+
 from __future__ import annotations
 
 import math
-from hypothesis import given, settings, assume
-from hypothesis import strategies as st
+
 import pytest
+from hypothesis import assume, given, settings
+from hypothesis import strategies as st
 
 from cerebra.domain.duration import parse_duration, seconds_to_iso8601
-from cerebra.domain.entities import DurationBand, ProposalState
-from cerebra.domain.quota import QuotaLedger
-from cerebra.domain.scoring import rank_videos, cosine_similarity_texts, _WEIGHTS
+from cerebra.domain.entities import ProposalState
 from cerebra.domain.playlist_solver import solve_playlist
+from cerebra.domain.quota import QuotaLedger
+from cerebra.domain.scoring import _WEIGHTS, cosine_similarity_texts, rank_videos
 from tests.conftest import make_video
 
 # ── Strategies ────────────────────────────────────────────────────────────────
@@ -25,11 +27,13 @@ duration_seconds_in_range = st.integers(min_value=0, max_value=7200)
 quota_amount = st.integers(min_value=0, max_value=5000)
 video_id_strategy = st.text(
     alphabet="ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789_-",
-    min_size=11, max_size=11,
+    min_size=11,
+    max_size=11,
 )
 text_strategy = st.text(
     alphabet=st.characters(whitelist_categories=("Lu", "Ll", "Nd", "Zs")),
-    min_size=1, max_size=200,
+    min_size=1,
+    max_size=200,
 )
 
 
@@ -38,15 +42,14 @@ text_strategy = st.text(
 # Property: converting seconds to ISO 8601 and back is lossless for all valid durations.
 # ═══════════════════════════════════════════════════════════════════════════════
 
+
 @given(seconds=valid_seconds)
 @settings(max_examples=500)
 def test_round_trip_seconds_iso8601(seconds: int) -> None:
     """ROUND TRIP: seconds → ISO 8601 → parse_duration == seconds (FR-4.2)."""
     iso = seconds_to_iso8601(seconds)
     recovered = parse_duration(iso)
-    assert recovered == seconds, (
-        f"Round-trip failed: {seconds} → {iso!r} → {recovered}"
-    )
+    assert recovered == seconds, f"Round-trip failed: {seconds} → {iso!r} → {recovered}"
 
 
 # ═══════════════════════════════════════════════════════════════════════════════
@@ -54,6 +57,7 @@ def test_round_trip_seconds_iso8601(seconds: int) -> None:
 # Property: permuting the candidate list order yields the same final ranking and
 #           scores, because ties are broken by video_id (FR-1.9).
 # ═══════════════════════════════════════════════════════════════════════════════
+
 
 @given(
     num_candidates=st.integers(min_value=2, max_value=10),
@@ -63,10 +67,12 @@ def test_round_trip_seconds_iso8601(seconds: int) -> None:
 def test_ranking_order_does_not_matter(num_candidates: int, seed) -> None:
     """ORDER DOES NOT MATTER: permuting candidate order leaves ranking unchanged (FR-1.9)."""
     import random
+
     rng = random.Random(seed.seed)
 
-    base_seed = make_video(video_id="seedXXXXXXX", title="Python machine learning tutorial",
-                           tags=["python", "ml"])
+    base_seed = make_video(
+        video_id="seedXXXXXXX", title="Python machine learning tutorial", tags=["python", "ml"]
+    )
 
     # Build candidates with distinct IDs
     candidates = [
@@ -103,6 +109,7 @@ def test_ranking_order_does_not_matter(num_candidates: int, seed) -> None:
 #           weighted_score is in [0,1] and weights sum to 1.
 # ═══════════════════════════════════════════════════════════════════════════════
 
+
 @given(text=text_strategy)
 @settings(max_examples=300)
 def test_cosine_structure_and_weights(text: str) -> None:
@@ -119,14 +126,10 @@ def test_cosine_structure_and_weights(text: str) -> None:
     # cos(a, b) ∈ [0, 1]
     other = "completely unrelated content xyz 123"
     score_other = cosine_similarity_texts(text, other)
-    assert 0.0 <= score_other <= 1.0 + 1e-9, (
-        f"cosine similarity {score_other} out of [0,1]"
-    )
+    assert 0.0 <= score_other <= 1.0 + 1e-9, f"cosine similarity {score_other} out of [0,1]"
 
     # weights sum to 1
-    assert math.isclose(sum(_WEIGHTS), 1.0, rel_tol=1e-9), (
-        f"Weights {_WEIGHTS} do not sum to 1"
-    )
+    assert math.isclose(sum(_WEIGHTS), 1.0, rel_tol=1e-9), f"Weights {_WEIGHTS} do not sum to 1"
 
 
 @given(
@@ -162,6 +165,7 @@ def test_weighted_score_in_range(num_candidates: int, seed_id: str) -> None:
 #           every video ≤ max_length, matches language, no duplicate IDs,
 #           and either total ≥ fill_ratio OR an explicit infeasible reason is given.
 # ═══════════════════════════════════════════════════════════════════════════════
+
 
 @given(
     num_videos=st.integers(min_value=0, max_value=20),
@@ -220,9 +224,7 @@ def test_playlist_solver_structure(
             f"Marked feasible but total {result.total_seconds} < min {min_total}"
         )
     else:
-        assert result.infeasible_reason, (
-            "Marked infeasible but no infeasible_reason given"
-        )
+        assert result.infeasible_reason, "Marked infeasible but no infeasible_reason given"
 
 
 # ═══════════════════════════════════════════════════════════════════════════════
@@ -232,10 +234,12 @@ def test_playlist_solver_structure(
 #           and terminal states never transition.
 # ═══════════════════════════════════════════════════════════════════════════════
 
+
 @given(
     reserve_amounts=st.lists(
         st.integers(min_value=0, max_value=500),
-        min_size=1, max_size=10,
+        min_size=1,
+        max_size=10,
     ),
     budget=st.integers(min_value=1000, max_value=10000),
 )
@@ -260,9 +264,7 @@ def test_quota_ledger_recurrence(reserve_amounts: list[int], budget: int) -> Non
             )
         else:
             # Failed reserve: remaining unchanged
-            assert after == before, (
-                f"Failed reserve changed remaining: {before} → {after}"
-            )
+            assert after == before, f"Failed reserve changed remaining: {before} → {after}"
 
         # Remaining is always non-negative
         assert q.general_remaining >= 0
@@ -270,14 +272,17 @@ def test_quota_ledger_recurrence(reserve_amounts: list[int], budget: int) -> Non
 
 @given(
     event_sequence=st.lists(
-        st.sampled_from(["confirm", "expire", "cancel", "partial_success", "partial_fail", "succeed", "fail"]),
-        min_size=1, max_size=15,
+        st.sampled_from(
+            ["confirm", "expire", "cancel", "partial_success", "partial_fail", "succeed", "fail"]
+        ),
+        min_size=1,
+        max_size=15,
     )
 )
 @settings(max_examples=400)
 def test_state_machine_recurrence(event_sequence: list[str]) -> None:
     """RECURRENCE/STATE: state machine only follows B.3 transitions; terminal states never transition."""
-    from cerebra.domain.state_machine import transition, StateMachineError
+    from cerebra.domain.state_machine import StateMachineError, transition
 
     state = ProposalState.PROPOSED
     terminal_hit = False
@@ -322,16 +327,19 @@ def test_state_machine_recurrence(event_sequence: list[str]) -> None:
 # EXTRA (clearly marked) – idempotence of normalise_video_ref
 # ═══════════════════════════════════════════════════════════════════════════════
 
+
 @given(
     vid_id=st.text(
         alphabet="ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789_-",
-        min_size=11, max_size=11,
+        min_size=11,
+        max_size=11,
     )
 )
 @settings(max_examples=300)
 def test_extra_normalise_idempotence(vid_id: str) -> None:
     """EXTRA – idempotence: normalise(normalise(x)) == normalise(x) for valid video IDs."""
     from cerebra.domain.normalise import normalise_video_ref
+
     first = normalise_video_ref(vid_id)
     second = normalise_video_ref(first)
     assert first == second, f"normalise not idempotent: {vid_id!r} → {first!r} → {second!r}"

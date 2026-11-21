@@ -2,19 +2,20 @@
 
 YouTube API returns durations like PT1H2M3S.
 """
+
 from __future__ import annotations
 
 import re
 
 _ISO8601_RE = re.compile(
     r"^P"
-    r"(?:(\d+)Y)?"   # years (ignored – not used by YouTube)
-    r"(?:(\d+)M)?"   # months (ignored)
-    r"(?:(\d+)W)?"   # weeks
-    r"(?:(\d+)D)?"   # days
+    r"(?:(\d+)Y)?"  # years (ignored – not used by YouTube)
+    r"(?:(\d+)M)?"  # months (ignored)
+    r"(?:(\d+)W)?"  # weeks
+    r"(?:(\d+)D)?"  # days
     r"(?:T"
-    r"(?:(\d+)H)?"   # hours
-    r"(?:(\d+)M)?"   # minutes
+    r"(?:(\d+)H)?"  # hours
+    r"(?:(\d+)M)?"  # minutes
     r"(?:(\d+(?:\.\d+)?)S)?"  # seconds (may be fractional)
     r")?$"
 )
@@ -34,11 +35,11 @@ def parse_duration(iso: str) -> int:
     93600
     """
     if not iso or not iso.startswith("P"):
-        raise ValueError(f"Invalid ISO 8601 duration: {repr(iso)}")
+        raise ValueError(f"Invalid ISO 8601 duration: {iso!r}")
 
     m = _ISO8601_RE.match(iso.upper())
     if not m:
-        raise ValueError(f"Invalid ISO 8601 duration: {repr(iso)}")
+        raise ValueError(f"Invalid ISO 8601 duration: {iso!r}")
 
     _years, _months, weeks, days, hours, minutes, seconds = m.groups(default="0")
     total = (

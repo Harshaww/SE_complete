@@ -4,6 +4,7 @@ the same port contracts as the fixture adapter (NFR-MA-1, CON-6, Phase 3 item 4)
 Video + writer contracts are the existing suites from test_contract.py, re-run here against
 LiveYouTubeAdapter. Channel + user-library contracts are new and run against BOTH adapters.
 """
+
 # mark: FR-5.17, CON-6
 from __future__ import annotations
 
@@ -35,6 +36,7 @@ def _live():
 
 # ── existing suites, now against the live adapter ────────────────────────────
 
+
 # mark: FR-5.17, CON-6
 class TestLiveVideoReaderContract(VideoReaderContractTests):
     @pytest.fixture
@@ -50,6 +52,7 @@ class TestLivePlaylistWriterContract(PlaylistWriterContractTests):
 
 
 # ── new suites run against both adapters ─────────────────────────────────────
+
 
 class ChannelReaderContractTests:
     @pytest.fixture
@@ -138,6 +141,7 @@ class TestLiveUserLibraryContract(UserLibraryContractTests):
 
 
 # ── structural (Protocol) conformance ────────────────────────────────────────
+
 
 # mark: FR-5.17, CON-6
 class TestLiveAdapterSatisfiesAllPorts:

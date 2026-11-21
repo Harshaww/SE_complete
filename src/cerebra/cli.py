@@ -15,6 +15,7 @@ demands. The MCP server can never write that record.
 
 Prompts and diagnostics go to stderr; machine-readable results go to stdout.
 """
+
 from __future__ import annotations
 
 import argparse
@@ -164,13 +165,20 @@ class _Cli:
     def pending(self) -> int:
         c = self._factory()
         assert c.recover is not None
-        self._emit([
-            {"proposal_id": p.proposal_id, "state": p.state.value, "playlist_id": p.playlist_id,
-             "ambiguous": p.ambiguous,
-             "missing_items": [i.video_id for i in p.items
-                               if p.item_states.get(i.video_id) != "INSERTED"]}
-            for p in c.recover.pending()
-        ])
+        self._emit(
+            [
+                {
+                    "proposal_id": p.proposal_id,
+                    "state": p.state.value,
+                    "playlist_id": p.playlist_id,
+                    "ambiguous": p.ambiguous,
+                    "missing_items": [
+                        i.video_id for i in p.items if p.item_states.get(i.video_id) != "INSERTED"
+                    ],
+                }
+                for p in c.recover.pending()
+            ]
+        )
         return EXIT_OK
 
     def status(self) -> int:
@@ -208,8 +216,9 @@ def main(
 ) -> int:
     args = build_parser().parse_args(argv)
     tty = isatty or (lambda: sys.stdin.isatty() and sys.stderr.isatty())
-    cli = _Cli(container_factory or _default_container, input_fn, tty,
-               out or sys.stdout, err or sys.stderr)
+    cli = _Cli(
+        container_factory or _default_container, input_fn, tty, out or sys.stdout, err or sys.stderr
+    )
     try:
         if args.command == "approve":
             return cli.approve(args.proposal_id)

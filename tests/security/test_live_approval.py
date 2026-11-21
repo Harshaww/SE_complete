@@ -1,19 +1,20 @@
 """Human approval provenance on the LIVE path (FR-4.6, FR-4.7, NFR-SA-1, ADR-A)."""
+
 # mark: FR-4.6, FR-4.7, NFR-SA-1, NFR-SA-2, ADR-A
 from __future__ import annotations
 
-import asyncio
 import io
 
 import pytest
 
-from cerebra.cli import main as cli_main, safe_terminal_text
+from cerebra.cli import main as cli_main
+from cerebra.cli import safe_terminal_text
 from cerebra.domain.entities import ProposalState
 from cerebra.domain.errors import CerebraError, ErrorCode
 from cerebra.mcp_server import _dispatch
 from tests.support.fake_youtube import FakeYouTube
 from tests.support.helpers import run
-from tests.support.live_env import CHANNEL, make_env, python_catalog
+from tests.support.live_env import make_env, python_catalog
 
 WRITES = {"playlists.insert", "playlistItems.insert"}
 
@@ -40,12 +41,19 @@ class TestNoWriteWithoutHumanApproval:
         code = err_code(env.create, prop["proposal_id"], prop["digest"])
         assert code == ErrorCode.APPROVAL_REJECTED
         assert writes(env) == []
-        assert env.container.proposal_store.load(prop["proposal_id"]).state == ProposalState.PROPOSED
+        assert (
+            env.container.proposal_store.load(prop["proposal_id"]).state == ProposalState.PROPOSED
+        )
 
     def test_confirmed_true_flag_is_ignored_via_mcp_dispatch(self, env):
         prop = env.propose()
-        args = {"proposal_id": prop["proposal_id"], "confirmation_digest": prop["digest"],
-                "confirmed": True, "approved": True, "force": True}
+        args = {
+            "proposal_id": prop["proposal_id"],
+            "confirmation_digest": prop["digest"],
+            "confirmed": True,
+            "approved": True,
+            "force": True,
+        }
         with pytest.raises(CerebraError) as e:
             run(_dispatch("create_playlist", args, env.container))
         assert e.value.code == ErrorCode.APPROVAL_REJECTED and writes(env) == []
@@ -63,21 +71,33 @@ class TestNoWriteWithoutHumanApproval:
 
     def test_approval_with_tampered_digest_rejected(self, env):
         prop = env.propose()
-        env.container.approvals.record(prop["proposal_id"], "f" * 64, "UCaccount0000000000000000", "t")
-        assert err_code(env.create, prop["proposal_id"], prop["digest"]) == ErrorCode.APPROVAL_REJECTED
+        env.container.approvals.record(
+            prop["proposal_id"], "f" * 64, "UCaccount0000000000000000", "t"
+        )
+        assert (
+            err_code(env.create, prop["proposal_id"], prop["digest"]) == ErrorCode.APPROVAL_REJECTED
+        )
         assert writes(env) == []
 
     def test_approval_for_other_account_rejected(self, env):
         prop = env.propose()
         env.container.approvals.record(prop["proposal_id"], prop["digest"], "UCsomeoneelse", "t")
-        assert err_code(env.create, prop["proposal_id"], prop["digest"]) == ErrorCode.APPROVAL_REJECTED
+        assert (
+            err_code(env.create, prop["proposal_id"], prop["digest"]) == ErrorCode.APPROVAL_REJECTED
+        )
 
     def test_proposal_from_other_account_rejected(self, env, tmp_path):
         prop = env.propose()
         env.approve(prop["proposal_id"])
-        other = make_env(tmp_path, FakeYouTube(python_catalog(), [], account_channel_id="UCotheraccount000000000"))
+        other = make_env(
+            tmp_path,
+            FakeYouTube(python_catalog(), [], account_channel_id="UCotheraccount000000000"),
+        )
         # same SQLite file (same data_dir) → same proposal store, different logged-in account
-        assert err_code(other.create, prop["proposal_id"], prop["digest"]) == ErrorCode.APPROVAL_REJECTED
+        assert (
+            err_code(other.create, prop["proposal_id"], prop["digest"])
+            == ErrorCode.APPROVAL_REJECTED
+        )
         assert writes(other) == []
 
 
@@ -92,12 +112,19 @@ class TestHappyPathAndSingleUse:
         n = len(prop["items"])
         assert writes(env) == ["playlists.insert"] + ["playlistItems.insert"] * n
         assert {c[0] for c in env.fake.calls} <= {
-            "search.list", "videos.list", "channels.list", "playlists.insert", "playlistItems.insert"}
-        assert sorted(e["video_id"] for e in env.fake.playlist_videos[res["playlist_id"]]) == \
-            sorted(i["video_id"] for i in prop["items"])
+            "search.list",
+            "videos.list",
+            "channels.list",
+            "playlists.insert",
+            "playlistItems.insert",
+        }
+        assert sorted(
+            e["video_id"] for e in env.fake.playlist_videos[res["playlist_id"]]
+        ) == sorted(i["video_id"] for i in prop["items"])
 
     def test_replay_rejected_and_no_second_write(self, env):
-        prop = env.propose(); env.approve(prop["proposal_id"])
+        prop = env.propose()
+        env.approve(prop["proposal_id"])
         env.create(prop["proposal_id"], prop["digest"])
         before = len(writes(env))
         code = err_code(env.create, prop["proposal_id"], prop["digest"])
@@ -105,24 +132,31 @@ class TestHappyPathAndSingleUse:
         assert len(writes(env)) == before
 
     def test_approval_is_single_use(self, env):
-        prop = env.propose(); env.approve(prop["proposal_id"])
+        prop = env.propose()
+        env.approve(prop["proposal_id"])
         env.create(prop["proposal_id"], prop["digest"])
         assert env.container.approvals.get(prop["proposal_id"])["used"] == "1"
         assert env.container.approvals.consume(prop["proposal_id"]) is False
 
     def test_expired_proposal_rejected_despite_approval(self, env):
-        prop = env.propose(); env.approve(prop["proposal_id"])
+        prop = env.propose()
+        env.approve(prop["proposal_id"])
         env.clock.advance(901)
-        assert err_code(env.create, prop["proposal_id"], prop["digest"]) == ErrorCode.PROPOSAL_EXPIRED
+        assert (
+            err_code(env.create, prop["proposal_id"], prop["digest"]) == ErrorCode.PROPOSAL_EXPIRED
+        )
         assert writes(env) == []
 
     def test_privacy_defaults_private_and_public_is_explicit(self, env):
-        prop = env.propose(); env.approve(prop["proposal_id"])
+        prop = env.propose()
+        env.approve(prop["proposal_id"])
         env.create(prop["proposal_id"], prop["digest"], "public")
-        body = [kw for n, kw in env.fake.calls if n == "playlists.insert"][0]["body"]
+        body = next(kw for n, kw in env.fake.calls if n == "playlists.insert")["body"]
         assert body["status"]["privacyStatus"] == "public"
         assert prop["proposal_id"] in body["snippet"]["description"]
-        assert not body["snippet"]["title"].startswith("[DATA]")  # real title, not the LLM delimiter
+        assert not body["snippet"]["title"].startswith(
+            "[DATA]"
+        )  # real title, not the LLM delimiter
 
 
 # mark: FR-4.6, FR-4.7, NFR-SA-1, NFR-SA-2, ADR-A
@@ -145,20 +179,28 @@ class TestApproveCli:
         assert code == 1 and "No proposal" in err
 
     def test_non_proposed_state_refused(self, env):
-        prop = env.propose(); env.approve(prop["proposal_id"])
+        prop = env.propose()
+        env.approve(prop["proposal_id"])
         env.create(prop["proposal_id"], prop["digest"])
         code, _, err = env.approve(prop["proposal_id"], typed="x")
         assert code == 1 and "CREATED" in err
 
     def test_expired_refused(self, env):
-        prop = env.propose(); env.clock.advance(1000)
+        prop = env.propose()
+        env.clock.advance(1000)
         code, _, err = env.approve(prop["proposal_id"], typed="x")
         assert code == 1 and "expired" in err
 
     def test_invalid_id_format(self, env):
         out, err = io.StringIO(), io.StringIO()
-        code = cli_main(["approve", "../../etc/passwd"], container_factory=lambda: env.container,
-                        input_fn=lambda p: "", isatty=lambda: True, out=out, err=err)
+        code = cli_main(
+            ["approve", "../../etc/passwd"],
+            container_factory=lambda: env.container,
+            input_fn=lambda p: "",
+            isatty=lambda: True,
+            out=out,
+            err=err,
+        )
         assert code == 1 and "INVALID_ARGUMENT" in err.getvalue()
 
     def test_terminal_escape_sequences_in_titles_are_neutralised(self, env):
@@ -169,6 +211,7 @@ class TestApproveCli:
         prop = env.propose()
         p = env.container.proposal_store.load(prop["proposal_id"])
         from dataclasses import replace
+
         p.items[0] = replace(p.items[0], title=evil)
         env.container.proposal_store.save(p)
         _, _, err = env.approve(prop["proposal_id"])

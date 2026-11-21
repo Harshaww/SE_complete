@@ -1,15 +1,13 @@
 """Application use case: recommend_videos (FR-2)."""
+
 from __future__ import annotations
 
-from typing import Optional
-
 from cerebra.config import Config
-from cerebra.domain.entities import SimilarVideo, VideoMetadata
+from cerebra.domain.entities import VideoMetadata
 from cerebra.domain.errors import auth_required, quota_budget_exceeded
 from cerebra.domain.quota import QuotaLedger
 from cerebra.domain.scoring import rank_videos
 from cerebra.ports.interfaces import CacheStore, PublicVideoReader, UserLibraryReader
-
 
 LIKED_VIDEO_CAP_NOTE = (
     "Based on up to 1,000 most recently liked videos accessible via the YouTube API; "
@@ -48,8 +46,8 @@ class RecommendVideosUseCase:
     async def recommend(
         self,
         limit: int = 10,
-        topic_filter: Optional[str] = None,
-        max_duration_seconds: Optional[int] = None,
+        topic_filter: str | None = None,
+        max_duration_seconds: int | None = None,
     ) -> dict[str, object]:
         """FR-2.1 to FR-2.7: recommend videos."""
         # FR-2.1: require auth
@@ -57,9 +55,7 @@ class RecommendVideosUseCase:
             raise auth_required()
 
         # Quota check
-        est = self._quota.estimate_search_workflow(
-            search_calls=0, video_fetch_count=100
-        )
+        est = self._quota.estimate_search_workflow(search_calls=0, video_fetch_count=100)
         if not self._quota.can_afford(general=est["general"]):
             raise quota_budget_exceeded(est["general"], self._quota.general_remaining)
 
@@ -95,6 +91,7 @@ class RecommendVideosUseCase:
         # Build a synthetic seed from profile (average across all profile videos)
         # Use the most common category and language as the "seed"
         from collections import Counter
+
         cats = Counter(v.category_id for v in profile_videos if v.category_id)
         langs = Counter(v.language for v in profile_videos if v.language)
         top_cat = cats.most_common(1)[0][0] if cats else ""
@@ -104,8 +101,9 @@ class RecommendVideosUseCase:
         corpus = " ".join(v.text_corpus() for v in profile_videos[:100])
 
         # Create a synthetic seed VideoMetadata
-        from cerebra.domain.entities import VideoMetadata as VM
-        synthetic_seed = VM(
+        from cerebra.domain.entities import VideoMetadata
+
+        synthetic_seed = VideoMetadata(
             video_id="_profile_seed_",
             title=corpus[:500],
             description=corpus[500:1000],
@@ -149,18 +147,20 @@ class RecommendVideosUseCase:
             reason = "Matches your viewing interests based on liked videos and playlists"
             if topic_filter and topic_filter.lower() in orig.title.lower():
                 reason = f"Directly matches your topic filter: [DATA] {topic_filter}"
-            recommendations.append({
-                "rank": rank_i,
-                "video_id": orig.video_id,
-                "title": f"[DATA] {orig.title}",
-                "channel": f"[DATA] {orig.channel_title}",
-                "duration": orig.duration_human(),
-                "duration_seconds": orig.duration_seconds,
-                "url": orig.url,
-                "score": round(sr.score, 4),
-                "reason": reason,
-                "tags_missing": sr.tags_missing,
-            })
+            recommendations.append(
+                {
+                    "rank": rank_i,
+                    "video_id": orig.video_id,
+                    "title": f"[DATA] {orig.title}",
+                    "channel": f"[DATA] {orig.channel_title}",
+                    "duration": orig.duration_human(),
+                    "duration_seconds": orig.duration_seconds,
+                    "url": orig.url,
+                    "score": round(sr.score, 4),
+                    "reason": reason,
+                    "tags_missing": sr.tags_missing,
+                }
+            )
 
         return {
             "recommendations": recommendations,

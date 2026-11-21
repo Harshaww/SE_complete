@@ -9,11 +9,12 @@ Weights (ADR decision, approved by team):
 
 All weights sum to 1.0.
 """
+
 from __future__ import annotations
 
 import math
+from collections.abc import Sequence
 from dataclasses import dataclass
-from typing import Sequence
 
 import numpy as np
 from sklearn.feature_extraction.text import TfidfVectorizer
@@ -153,9 +154,7 @@ def rank_channels(
         cand_vec = tfidf_matrix[idx + 1]
         cosine_score = _cosine(seed_vec, cand_vec)
 
-        topic_match = (
-            1.0 if seed_topics and set(cand.topic_categories) & seed_topics else 0.0
-        )
+        topic_match = 1.0 if seed_topics and set(cand.topic_categories) & seed_topics else 0.0
         lang_match = (
             1.0 if seed.language and cand.language and seed.language == cand.language else 0.0
         )
@@ -194,7 +193,7 @@ def cosine_similarity_texts(text_a: str, text_b: str) -> float:
         strip_accents="unicode",
         lowercase=True,
         sublinear_tf=True,
-        token_pattern=r"(?u)\b\w+\b",  # 1+ chars (default requires 2+)
+        token_pattern=r"(?u)\b\w+\b",  # noqa: S106 - regex, not a secret
     )
     try:
         m = vec.fit_transform([text_a, text_b]).toarray()

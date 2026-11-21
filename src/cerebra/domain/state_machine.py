@@ -5,20 +5,19 @@ States: PROPOSED → CONFIRMED → CREATED | PARTIAL → CREATED
         CONFIRMED → FAILED
         PARTIAL → FAILED
 """
+
 from __future__ import annotations
 
 from cerebra.domain.entities import ProposalState
 from cerebra.domain.errors import (
     CerebraError,
     ErrorCode,
-    proposal_expired,
-    proposal_not_found,
-    proposal_already_used,
 )
 
 
 class StateMachineError(CerebraError):
     """Raised for invalid state transitions."""
+
     pass
 
 
@@ -36,7 +35,7 @@ def transition(
         raise StateMachineError(
             code=ErrorCode.PROPOSAL_INVALID_STATE,
             message=(
-                f"Proposal {repr(proposal_id)} is in terminal state {current.value} "
+                f"Proposal {proposal_id!r} is in terminal state {current.value} "
                 f"and cannot transition to {target.value}."
             ),
             suggested_action="Run propose_playlist again to create a new proposal.",
@@ -45,7 +44,7 @@ def transition(
         raise StateMachineError(
             code=ErrorCode.PROPOSAL_INVALID_STATE,
             message=(
-                f"Proposal {repr(proposal_id)} cannot transition from "
+                f"Proposal {proposal_id!r} cannot transition from "
                 f"{current.value} to {target.value}."
             ),
             suggested_action="Check the proposal state and try again.",

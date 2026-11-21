@@ -1,11 +1,12 @@
 """Unit tests for domain/normalise.py (FR-1.1, FR-1.2)."""
+
 import pytest
 
 from cerebra.domain.errors import CerebraError, ErrorCode
-from cerebra.domain.normalise import normalise_video_ref, normalise_channel_ref
-
+from cerebra.domain.normalise import normalise_channel_ref, normalise_video_ref
 
 # ── Video ID normalisation ────────────────────────────────────────────────────
+
 
 class TestNormaliseVideoRef:
     def test_plain_video_id_accepted(self):
@@ -15,7 +16,10 @@ class TestNormaliseVideoRef:
         assert normalise_video_ref("https://www.youtube.com/watch?v=dQw4w9WgXcQ") == "dQw4w9WgXcQ"
 
     def test_watch_url_with_extra_params(self):
-        assert normalise_video_ref("https://www.youtube.com/watch?v=dQw4w9WgXcQ&t=42s") == "dQw4w9WgXcQ"
+        assert (
+            normalise_video_ref("https://www.youtube.com/watch?v=dQw4w9WgXcQ&t=42s")
+            == "dQw4w9WgXcQ"
+        )
 
     def test_short_url(self):
         assert normalise_video_ref("https://www.youtube.com/shorts/dQw4w9WgXcQ") == "dQw4w9WgXcQ"
@@ -70,6 +74,7 @@ class TestNormaliseVideoRef:
 
 # ── Channel reference normalisation ──────────────────────────────────────────
 
+
 class TestNormaliseChannelRef:
     def test_channel_id_accepted(self):
         kind, val = normalise_channel_ref("UCuAXFkgsw1L7xaCfnd5JJOw")
@@ -82,7 +87,9 @@ class TestNormaliseChannelRef:
         assert val == "mkbhd"
 
     def test_channel_url(self):
-        kind, val = normalise_channel_ref("https://www.youtube.com/channel/UCuAXFkgsw1L7xaCfnd5JJOw")
+        kind, val = normalise_channel_ref(
+            "https://www.youtube.com/channel/UCuAXFkgsw1L7xaCfnd5JJOw"
+        )
         assert kind == "id"
         assert val == "UCuAXFkgsw1L7xaCfnd5JJOw"
 

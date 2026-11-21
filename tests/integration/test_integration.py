@@ -1,19 +1,15 @@
 """Integration tests: quota ledger + cache + persistence with real SQLite (TR-2)."""
+
 from __future__ import annotations
 
 import asyncio
-import uuid
 import datetime
-import pytest
+import uuid
 
 from cerebra.domain.entities import PlaylistItem, PlaylistProposal, ProposalState
 from cerebra.domain.quota import QuotaLedger
-from cerebra.infrastructure.clock import FakeClock
 from cerebra.infrastructure.persistence.sqlite_stores import (
-    SQLiteAuditLog,
     SQLiteCacheStore,
-    SQLiteDB,
-    SQLiteProposalStore,
 )
 
 
@@ -35,6 +31,7 @@ class TestQuotaLedgerIntegration:
     def test_concurrent_reserves_never_overspend(self):
         """L7: parallel reserves never exceed budget."""
         import threading
+
         q = QuotaLedger(general_budget=1000, search_budget=100)
         results = []
         lock = threading.Lock()
@@ -65,6 +62,7 @@ class TestCacheIntegration:
         """FR-5.9: cache TTL respected."""
         cache.set("key2", "value", ttl_seconds=0)
         import time
+
         time.sleep(0.01)
         # With TTL=0 the entry should be expired
         # (depends on SQLite precision; set a future time check)
@@ -95,10 +93,16 @@ class TestProposalStoreIntegration:
         digest = "a" * 64
         items = [PlaylistItem("vid0001ABCDE", "[DATA] Title", "[DATA] Channel", 600)]
         proposal = PlaylistProposal(
-            proposal_id=pid, topic="Python", total_duration_seconds=1800,
-            max_video_duration_seconds=None, language="en", items=items,
-            created_at="2024-01-01T00:00:00Z", expires_at="2024-01-01T00:15:00Z",
-            state=ProposalState.PROPOSED, digest=digest,
+            proposal_id=pid,
+            topic="Python",
+            total_duration_seconds=1800,
+            max_video_duration_seconds=None,
+            language="en",
+            items=items,
+            created_at="2024-01-01T00:00:00Z",
+            expires_at="2024-01-01T00:15:00Z",
+            state=ProposalState.PROPOSED,
+            digest=digest,
         )
         proposal_store.save(proposal)
         loaded = proposal_store.load(pid)
@@ -112,10 +116,16 @@ class TestProposalStoreIntegration:
         pid = str(uuid.uuid4())
         items = [PlaylistItem("vid0001ABCDE", "[DATA] T", "[DATA] C", 600)]
         proposal = PlaylistProposal(
-            proposal_id=pid, topic="ML", total_duration_seconds=600,
-            max_video_duration_seconds=None, language=None, items=items,
-            created_at="2024-01-01T00:00:00Z", expires_at="2024-01-01T01:00:00Z",
-            state=ProposalState.PROPOSED, digest="a" * 64,
+            proposal_id=pid,
+            topic="ML",
+            total_duration_seconds=600,
+            max_video_duration_seconds=None,
+            language=None,
+            items=items,
+            created_at="2024-01-01T00:00:00Z",
+            expires_at="2024-01-01T01:00:00Z",
+            state=ProposalState.PROPOSED,
+            digest="a" * 64,
         )
         proposal_store.save(proposal)
         proposal_store.update_state(pid, state=ProposalState.CONFIRMED)
@@ -131,8 +141,8 @@ class TestPartialCreationRecovery:
     """FR-4.13: partial creation recoverable; ADR-C: idempotency."""
 
     def test_partial_write_reports_failed_items(self, proposal_store, audit_log, clock, config):
-        from cerebra.application.playlist import CreatePlaylistUseCase
         from cerebra.adapters.fixtures.fixture_adapter import FixturePlaylistWriter
+        from cerebra.application.playlist import CreatePlaylistUseCase
 
         writer = FixturePlaylistWriter()
         # Inject failure for second item
@@ -146,20 +156,29 @@ class TestPartialCreationRecovery:
             PlaylistItem("vid0002ABCDE", "[DATA] T2", "[DATA] C", 600),
         ]
         expires = datetime.datetime.fromtimestamp(
-            clock.utcnow_timestamp() + 900, tz=datetime.timezone.utc
+            clock.utcnow_timestamp() + 900, tz=datetime.UTC
         ).isoformat()
         proposal = PlaylistProposal(
-            proposal_id=pid, topic="Test", total_duration_seconds=1200,
-            max_video_duration_seconds=None, language=None, items=items,
-            created_at=clock.utcnow_iso(), expires_at=expires,
-            state=ProposalState.PROPOSED, digest=digest,
+            proposal_id=pid,
+            topic="Test",
+            total_duration_seconds=1200,
+            max_video_duration_seconds=None,
+            language=None,
+            items=items,
+            created_at=clock.utcnow_iso(),
+            expires_at=expires,
+            state=ProposalState.PROPOSED,
+            digest=digest,
         )
         proposal_store.save(proposal)
 
         create_uc = CreatePlaylistUseCase(
-            playlist_writer=writer, quota=quota,
-            proposal_store=proposal_store, audit_log=audit_log,
-            clock=clock, config=config,
+            playlist_writer=writer,
+            quota=quota,
+            proposal_store=proposal_store,
+            audit_log=audit_log,
+            clock=clock,
+            config=config,
         )
 
         result = asyncio.get_event_loop().run_until_complete(

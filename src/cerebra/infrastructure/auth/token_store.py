@@ -7,6 +7,7 @@ Preference order:
 
 Tokens are NEVER written to source, fixtures, logs or the SQLite database.
 """
+
 from __future__ import annotations
 
 import contextlib

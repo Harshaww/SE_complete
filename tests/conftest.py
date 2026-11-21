@@ -1,4 +1,5 @@
 """conftest.py – shared fixtures for all test layers."""
+
 from __future__ import annotations
 
 import pytest
@@ -8,8 +9,6 @@ from cerebra.adapters.fixtures.fixture_adapter import (
     FixturePlaylistWriter,
     FixtureUserLibraryReader,
     FixtureVideoReader,
-    _dict_to_channel,
-    _dict_to_video,
 )
 from cerebra.config import Config
 from cerebra.domain.entities import ChannelMetadata, VideoMetadata
@@ -22,8 +21,8 @@ from cerebra.infrastructure.persistence.sqlite_stores import (
     SQLiteProposalStore,
 )
 
-
 # ── Helper builders ────────────────────────────────────────────────────────────
+
 
 def make_video(**kwargs: object) -> VideoMetadata:
     defaults = {
@@ -60,6 +59,7 @@ def make_channel(**kwargs: object) -> ChannelMetadata:
 
 
 # ── Fixtures ──────────────────────────────────────────────────────────────────
+
 
 @pytest.fixture
 def config(tmp_path):

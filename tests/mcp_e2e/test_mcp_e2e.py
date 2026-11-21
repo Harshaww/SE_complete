@@ -1,8 +1,9 @@
 """MCP end-to-end tests (TR-3): FR-1 to FR-5 through the real MCP interface with fixture provider."""
+
 from __future__ import annotations
 
 import asyncio
-import json
+
 import pytest
 
 from cerebra.config import Config
@@ -32,6 +33,7 @@ class TestMCPFindSimilarVideos:
 
     def test_invalid_reference_returns_structured_error(self, tmp_path):
         from cerebra.domain.errors import CerebraError, ErrorCode
+
         cfg = _make_config(tmp_path)
         container = build_container(cfg)
         with pytest.raises(CerebraError) as exc:
@@ -43,6 +45,7 @@ class TestMCPFindSimilarVideos:
     def test_over_budget_rejected_before_api_call(self, tmp_path):
         """TR-6, FR-5.8: over-budget workflow rejected with zero provider calls."""
         from cerebra.domain.errors import CerebraError, ErrorCode
+
         cfg = _make_config(tmp_path)
         cfg.daily_quota_budget = 0  # no budget at all
         container = build_container(cfg)
@@ -57,11 +60,14 @@ class TestMCPRecommend:
     """FR-2: Recommendations."""
 
     def test_unauthenticated_returns_auth_required(self, tmp_path):
-        from cerebra.domain.errors import CerebraError, ErrorCode
+        from cerebra.adapters.fixtures.fixture_adapter import (
+            FixtureUserLibraryReader,
+            FixtureVideoReader,
+        )
         from cerebra.application.recommend import RecommendVideosUseCase
-        from cerebra.adapters.fixtures.fixture_adapter import FixtureVideoReader, FixtureUserLibraryReader
+        from cerebra.domain.errors import CerebraError, ErrorCode
         from cerebra.domain.quota import QuotaLedger
-        from cerebra.infrastructure.persistence.sqlite_stores import SQLiteDB, SQLiteCacheStore
+        from cerebra.infrastructure.persistence.sqlite_stores import SQLiteCacheStore, SQLiteDB
 
         cfg = _make_config(tmp_path)
         db = SQLiteDB(cfg.db_path)
@@ -71,7 +77,9 @@ class TestMCPRecommend:
         uc = RecommendVideosUseCase(
             video_reader=FixtureVideoReader(),
             user_library=FixtureUserLibraryReader(),
-            quota=quota, cache=cache, config=cfg,
+            quota=quota,
+            cache=cache,
+            config=cfg,
             is_authenticated=False,  # <-- not authenticated
         )
         with pytest.raises(CerebraError) as exc:
@@ -80,10 +88,13 @@ class TestMCPRecommend:
 
     def test_empty_profile_returns_explanatory_empty(self, tmp_path):
         """FR-2.6: empty profile → explanatory empty result, not error."""
+        from cerebra.adapters.fixtures.fixture_adapter import (
+            FixtureUserLibraryReader,
+            FixtureVideoReader,
+        )
         from cerebra.application.recommend import RecommendVideosUseCase
-        from cerebra.adapters.fixtures.fixture_adapter import FixtureVideoReader, FixtureUserLibraryReader
         from cerebra.domain.quota import QuotaLedger
-        from cerebra.infrastructure.persistence.sqlite_stores import SQLiteDB, SQLiteCacheStore
+        from cerebra.infrastructure.persistence.sqlite_stores import SQLiteCacheStore, SQLiteDB
 
         cfg = _make_config(tmp_path)
         db = SQLiteDB(cfg.db_path)
@@ -93,7 +104,9 @@ class TestMCPRecommend:
         uc = RecommendVideosUseCase(
             video_reader=FixtureVideoReader(),
             user_library=FixtureUserLibraryReader(),  # empty library
-            quota=quota, cache=cache, config=cfg,
+            quota=quota,
+            cache=cache,
+            config=cfg,
             is_authenticated=True,
         )
         result = asyncio.get_event_loop().run_until_complete(uc.recommend())
@@ -107,11 +120,11 @@ class TestMCPAnalyse:
     """FR-3: Engagement Analysis."""
 
     def test_analyse_requires_auth(self, tmp_path):
-        from cerebra.domain.errors import CerebraError, ErrorCode
-        from cerebra.application.analyse import AnalyseEngagementUseCase
         from cerebra.adapters.fixtures.fixture_adapter import FixtureUserLibraryReader
+        from cerebra.application.analyse import AnalyseEngagementUseCase
+        from cerebra.domain.errors import CerebraError, ErrorCode
         from cerebra.domain.quota import QuotaLedger
-        from cerebra.infrastructure.persistence.sqlite_stores import SQLiteDB, SQLiteCacheStore
+        from cerebra.infrastructure.persistence.sqlite_stores import SQLiteCacheStore, SQLiteDB
 
         cfg = _make_config(tmp_path)
         db = SQLiteDB(cfg.db_path)
@@ -120,7 +133,10 @@ class TestMCPAnalyse:
 
         uc = AnalyseEngagementUseCase(
             user_library=FixtureUserLibraryReader(),
-            quota=quota, cache=cache, config=cfg, is_authenticated=False,
+            quota=quota,
+            cache=cache,
+            config=cfg,
+            is_authenticated=False,
         )
         with pytest.raises(CerebraError) as exc:
             asyncio.get_event_loop().run_until_complete(uc.analyse())
@@ -128,10 +144,10 @@ class TestMCPAnalyse:
 
     def test_analyse_empty_data_returns_empty_sections(self, tmp_path):
         """FR-3.8: empty sections with explanation when library is empty."""
-        from cerebra.application.analyse import AnalyseEngagementUseCase
         from cerebra.adapters.fixtures.fixture_adapter import FixtureUserLibraryReader
+        from cerebra.application.analyse import AnalyseEngagementUseCase
         from cerebra.domain.quota import QuotaLedger
-        from cerebra.infrastructure.persistence.sqlite_stores import SQLiteDB, SQLiteCacheStore
+        from cerebra.infrastructure.persistence.sqlite_stores import SQLiteCacheStore, SQLiteDB
 
         cfg = _make_config(tmp_path)
         db = SQLiteDB(cfg.db_path)
@@ -143,7 +159,10 @@ class TestMCPAnalyse:
         empty_dir.mkdir()
         uc = AnalyseEngagementUseCase(
             user_library=FixtureUserLibraryReader(fixture_dir=empty_dir),
-            quota=quota, cache=cache, config=cfg, is_authenticated=True,
+            quota=quota,
+            cache=cache,
+            config=cfg,
+            is_authenticated=True,
         )
         result = asyncio.get_event_loop().run_until_complete(uc.analyse())
         assert result["top_channels"] == []
@@ -157,12 +176,16 @@ class TestMCPProposePlaylst:
 
     def test_propose_missing_topic_returns_missing_constraint(self, tmp_path):
         """FR-4.1: missing mandatory constraint → MISSING_CONSTRAINT error."""
-        from cerebra.domain.errors import CerebraError, ErrorCode
-        from cerebra.application.playlist import ProposePlaylistUseCase
         from cerebra.adapters.fixtures.fixture_adapter import FixtureVideoReader
+        from cerebra.application.playlist import ProposePlaylistUseCase
+        from cerebra.domain.errors import CerebraError, ErrorCode
         from cerebra.domain.quota import QuotaLedger
         from cerebra.infrastructure.clock import FakeClock
-        from cerebra.infrastructure.persistence.sqlite_stores import SQLiteDB, SQLiteCacheStore, SQLiteProposalStore
+        from cerebra.infrastructure.persistence.sqlite_stores import (
+            SQLiteCacheStore,
+            SQLiteDB,
+            SQLiteProposalStore,
+        )
 
         cfg = _make_config(tmp_path)
         db = SQLiteDB(cfg.db_path)
@@ -172,8 +195,12 @@ class TestMCPProposePlaylst:
 
         uc = ProposePlaylistUseCase(
             video_reader=FixtureVideoReader(),
-            quota=quota, proposal_store=SQLiteProposalStore(db),
-            cache=cache, clock=clock, config=cfg, is_authenticated=True,
+            quota=quota,
+            proposal_store=SQLiteProposalStore(db),
+            cache=cache,
+            clock=clock,
+            config=cfg,
+            is_authenticated=True,
         )
         with pytest.raises(CerebraError) as exc:
             asyncio.get_event_loop().run_until_complete(
@@ -182,12 +209,16 @@ class TestMCPProposePlaylst:
         assert exc.value.code == ErrorCode.MISSING_CONSTRAINT
 
     def test_propose_missing_duration_returns_missing_constraint(self, tmp_path):
-        from cerebra.domain.errors import CerebraError, ErrorCode
-        from cerebra.application.playlist import ProposePlaylistUseCase
         from cerebra.adapters.fixtures.fixture_adapter import FixtureVideoReader
+        from cerebra.application.playlist import ProposePlaylistUseCase
+        from cerebra.domain.errors import CerebraError, ErrorCode
         from cerebra.domain.quota import QuotaLedger
         from cerebra.infrastructure.clock import FakeClock
-        from cerebra.infrastructure.persistence.sqlite_stores import SQLiteDB, SQLiteCacheStore, SQLiteProposalStore
+        from cerebra.infrastructure.persistence.sqlite_stores import (
+            SQLiteCacheStore,
+            SQLiteDB,
+            SQLiteProposalStore,
+        )
 
         cfg = _make_config(tmp_path)
         db = SQLiteDB(cfg.db_path)
@@ -197,8 +228,12 @@ class TestMCPProposePlaylst:
 
         uc = ProposePlaylistUseCase(
             video_reader=FixtureVideoReader(),
-            quota=quota, proposal_store=SQLiteProposalStore(db),
-            cache=cache, clock=clock, config=cfg, is_authenticated=True,
+            quota=quota,
+            proposal_store=SQLiteProposalStore(db),
+            cache=cache,
+            clock=clock,
+            config=cfg,
+            is_authenticated=True,
         )
         with pytest.raises(CerebraError) as exc:
             asyncio.get_event_loop().run_until_complete(
@@ -212,6 +247,7 @@ class TestUniformErrors:
 
     def test_cerebra_error_to_dict_structure(self):
         from cerebra.domain.errors import CerebraError, ErrorCode
+
         err = CerebraError(
             code=ErrorCode.AUTH_REQUIRED,
             message="Need auth",

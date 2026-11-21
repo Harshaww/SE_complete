@@ -3,6 +3,7 @@
 This file contains ONLY: server construction, tool/resource registration, main().
 No business logic here — all logic lives in application/ and domain/.
 """
+
 from __future__ import annotations
 
 import asyncio
@@ -24,8 +25,8 @@ from cerebra.mcp_tools.validation import (
     validate_privacy_status,
     validate_proposal_id,
     validate_reference,
-    validate_topic,
     validate_top_k,
+    validate_topic,
 )
 
 
@@ -129,10 +130,22 @@ def build_server() -> Server:
                             "description": "Number of top channels/categories to return (default 5)",
                             "default": 5,
                         },
-                        "period_a_start": {"type": "string", "description": "Period A start date YYYY-MM-DD"},
-                        "period_a_end": {"type": "string", "description": "Period A end date YYYY-MM-DD"},
-                        "period_b_start": {"type": "string", "description": "Period B start date YYYY-MM-DD"},
-                        "period_b_end": {"type": "string", "description": "Period B end date YYYY-MM-DD"},
+                        "period_a_start": {
+                            "type": "string",
+                            "description": "Period A start date YYYY-MM-DD",
+                        },
+                        "period_a_end": {
+                            "type": "string",
+                            "description": "Period A end date YYYY-MM-DD",
+                        },
+                        "period_b_start": {
+                            "type": "string",
+                            "description": "Period B start date YYYY-MM-DD",
+                        },
+                        "period_b_end": {
+                            "type": "string",
+                            "description": "Period B end date YYYY-MM-DD",
+                        },
                     },
                 },
             ),
@@ -203,16 +216,23 @@ def build_server() -> Server:
         try:
             result = await _dispatch(name, arguments, container)
             import json
+
             return [TextContent(type="text", text=json.dumps(result, indent=2, default=str))]
         except CerebraError as e:
             import json
+
             return [TextContent(type="text", text=json.dumps(e.to_dict(), indent=2))]
-        except Exception as e:  # noqa: BLE001 - last-resort uniform error (FR-5.15)
+        except Exception as e:
             import json
-            payload = {"error": {
-                "code": "INTERNAL_ERROR", "message": type(e).__name__,
-                "retryable": False, "suggested_action": "Report this bug.",
-            }}
+
+            payload = {
+                "error": {
+                    "code": "INTERNAL_ERROR",
+                    "message": type(e).__name__,
+                    "retryable": False,
+                    "suggested_action": "Report this bug.",
+                }
+            }
             return [TextContent(type="text", text=json.dumps(payload))]
 
     # ── Resources (FR-5.13) ──────────────────────────────────────────────────
@@ -237,6 +257,7 @@ def build_server() -> Server:
     @app.read_resource()
     async def read_resource(uri: str) -> str:
         import json
+
         if str(uri) == "cerebra://quota_status":
             return json.dumps(container.quota.status(), indent=2)
         if str(uri) == "cerebra://auth_status":
@@ -249,9 +270,7 @@ def build_server() -> Server:
     return app
 
 
-async def _dispatch(
-    name: str, args: dict[str, Any], container: Any
-) -> dict[str, Any]:
+async def _dispatch(name: str, args: dict[str, Any], container: Any) -> dict[str, Any]:
     """Route tool calls to use cases (FR-5.12)."""
     if name == "find_similar_videos":
         ref = validate_reference(args.get("reference"))
@@ -296,8 +315,12 @@ async def _dispatch(
         lang = validate_language(args.get("language"))
         max_dur = None
         if "max_duration_seconds" in args and args["max_duration_seconds"] is not None:
-            max_dur = validate_duration_seconds(args["max_duration_seconds"], "max_duration_seconds")
-        return await container.recommend.recommend(limit=limit, topic_filter=args.get("topic_filter"), max_duration_seconds=max_dur)
+            max_dur = validate_duration_seconds(
+                args["max_duration_seconds"], "max_duration_seconds"
+            )
+        return await container.recommend.recommend(
+            limit=limit, topic_filter=args.get("topic_filter"), max_duration_seconds=max_dur
+        )
 
     elif name == "analyse_engagement":
         top_k = validate_top_k(args.get("top_k"))
@@ -310,10 +333,14 @@ async def _dispatch(
 
     elif name == "propose_playlist":
         topic = validate_topic(args.get("topic"))
-        total = validate_duration_seconds(args.get("total_duration_seconds"), "total_duration_seconds")
+        total = validate_duration_seconds(
+            args.get("total_duration_seconds"), "total_duration_seconds"
+        )
         max_vid = None
         if args.get("max_video_duration_seconds") is not None:
-            max_vid = validate_duration_seconds(args["max_video_duration_seconds"], "max_video_duration_seconds")
+            max_vid = validate_duration_seconds(
+                args["max_video_duration_seconds"], "max_video_duration_seconds"
+            )
         lang = validate_language(args.get("language"))
         return await container.propose.propose(topic, total, max_vid, lang)
 
@@ -325,9 +352,10 @@ async def _dispatch(
 
     else:
         from cerebra.domain.errors import CerebraError, ErrorCode
+
         raise CerebraError(
             ErrorCode.INVALID_ARGUMENT,
-            f"Unknown tool: {repr(name)}",
+            f"Unknown tool: {name!r}",
             suggested_action="Check the tool name.",
         )
 
@@ -343,10 +371,10 @@ def _warn_pending_recoveries(container: Any) -> None:
         return
     try:
         pending = recover.pending()
-    except Exception:  # noqa: BLE001 - never block startup on this
+    except Exception:
         return
     for p in pending:
-        print(
+        print(  # noqa: T201 - stderr notice; stdout is the MCP channel
             f"cerebra: proposal {p.proposal_id} is {p.state.value}; "
             f"run `cerebra-cli recover {p.proposal_id}`",
             file=sys.stderr,

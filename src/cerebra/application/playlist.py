@@ -3,6 +3,7 @@
 SAFETY CRITICAL: No write can happen without human-originated confirmation
 bound to the proposal_id, digest, account, expiry, and single-use (FR-4.6, ADR-A).
 """
+
 from __future__ import annotations
 
 import datetime
@@ -10,7 +11,7 @@ import hashlib
 import hmac
 import json
 import uuid
-from typing import Awaitable, Callable, Optional
+from collections.abc import Awaitable, Callable
 
 from cerebra.config import Config
 from cerebra.domain.entities import (
@@ -25,7 +26,6 @@ from cerebra.domain.errors import (
     approval_rejected,
     auth_required,
     missing_constraint,
-    no_youtube_channel,
     proposal_already_used,
     proposal_expired,
     proposal_not_found,
@@ -33,7 +33,7 @@ from cerebra.domain.errors import (
 )
 from cerebra.domain.playlist_solver import solve_playlist
 from cerebra.domain.quota import QUOTA_COSTS, QuotaLedger
-from cerebra.domain.state_machine import StateMachineError, transition
+from cerebra.domain.state_machine import transition
 from cerebra.ports.interfaces import (
     ApprovalStore,
     AuditLog,
@@ -44,13 +44,10 @@ from cerebra.ports.interfaces import (
     PublicVideoReader,
 )
 
-
 AccountIdProvider = Callable[[], Awaitable[str]]
 
 
-def compute_digest(
-    proposal_id: str, topic: str, video_ids: list[str], account_id: str = ""
-) -> str:
+def compute_digest(proposal_id: str, topic: str, video_ids: list[str], account_id: str = "") -> str:
     """SHA-256 over the proposal content (ADR-A §1). ``account_id`` binds it to the OAuth
     account when known (ADR-A §2); omitted from the payload when empty so fixture-mode
     digests are unchanged."""
@@ -76,7 +73,7 @@ class ProposePlaylistUseCase:
         clock: Clock,
         config: Config,
         is_authenticated: bool = False,
-        account_id_provider: Optional[AccountIdProvider] = None,
+        account_id_provider: AccountIdProvider | None = None,
     ) -> None:
         self._video = video_reader
         self._quota = quota
@@ -89,10 +86,10 @@ class ProposePlaylistUseCase:
 
     async def propose(
         self,
-        topic: Optional[str],
-        total_duration_seconds: Optional[int],
-        max_video_duration_seconds: Optional[int] = None,
-        language: Optional[str] = None,
+        topic: str | None,
+        total_duration_seconds: int | None,
+        max_video_duration_seconds: int | None = None,
+        language: str | None = None,
     ) -> dict[str, object]:
         """FR-4.1 to FR-4.5."""
         if not self._authenticated:
@@ -145,9 +142,7 @@ class ProposePlaylistUseCase:
             now_iso = self._clock.utcnow_iso()
             expires_at = self._clock.utcnow_timestamp() + self._cfg.proposal_expiry_seconds
 
-            expires_iso = datetime.datetime.fromtimestamp(
-                expires_at, tz=datetime.timezone.utc
-            ).isoformat()
+            expires_iso = datetime.datetime.fromtimestamp(expires_at, tz=datetime.UTC).isoformat()
 
             proposal_id = str(uuid.uuid4())
             digest = compute_digest(
@@ -180,7 +175,9 @@ class ProposePlaylistUseCase:
                 "digest": digest,
                 "topic": f"[DATA] {topic}",
                 "feasible": solver_result.feasible,
-                "infeasible_reason": solver_result.infeasible_reason if not solver_result.feasible else "",
+                "infeasible_reason": solver_result.infeasible_reason
+                if not solver_result.feasible
+                else "",
                 "total_duration": proposal.total_duration_human(),
                 "total_duration_seconds": proposal.total_actual_seconds,
                 "requested_duration_seconds": total_duration_seconds,
@@ -214,9 +211,7 @@ class ProposePlaylistUseCase:
             self._quota.release(general=est["general"], search=est["search"])
             raise
 
-    def _compute_digest(
-        self, proposal_id: str, topic: str, items: list[PlaylistItem]
-    ) -> str:
+    def _compute_digest(self, proposal_id: str, topic: str, items: list[PlaylistItem]) -> str:
         return compute_digest(proposal_id, topic, [i.video_id for i in items])
 
 
@@ -232,10 +227,15 @@ class CreatePlaylistUseCase:
     """
 
     #: Error codes after which continuing to insert items is pointless.
-    _STOP_CODES = frozenset({
-        ErrorCode.QUOTA_EXHAUSTED, ErrorCode.QUOTA_BUDGET_EXCEEDED, ErrorCode.AUTH_REQUIRED,
-        ErrorCode.AUTH_EXPIRED, ErrorCode.INSUFFICIENT_SCOPE,
-    })
+    _STOP_CODES = frozenset(
+        {
+            ErrorCode.QUOTA_EXHAUSTED,
+            ErrorCode.QUOTA_BUDGET_EXCEEDED,
+            ErrorCode.AUTH_REQUIRED,
+            ErrorCode.AUTH_EXPIRED,
+            ErrorCode.INSUFFICIENT_SCOPE,
+        }
+    )
 
     def __init__(
         self,
@@ -245,8 +245,8 @@ class CreatePlaylistUseCase:
         audit_log: AuditLog,
         clock: Clock,
         config: Config,
-        approval_store: Optional[ApprovalStore] = None,
-        account_id_provider: Optional[AccountIdProvider] = None,
+        approval_store: ApprovalStore | None = None,
+        account_id_provider: AccountIdProvider | None = None,
         require_approval: bool = False,
     ) -> None:
         self._writer = playlist_writer
@@ -285,12 +285,10 @@ class CreatePlaylistUseCase:
             raise proposal_already_used(proposal_id)
 
         # ADR-A §1/§5: digest must match; constant-time comparison
-        if not hmac.compare_digest(
-            confirmation_digest.encode(), proposal.digest.encode()
-        ):
+        if not hmac.compare_digest(confirmation_digest.encode(), proposal.digest.encode()):
             raise approval_rejected(
-                f"Digest mismatch: provided {repr(confirmation_digest[:8])}... "
-                f"does not match proposal {repr(proposal.digest[:8])}..."
+                f"Digest mismatch: provided {confirmation_digest[:8]!r}... "
+                f"does not match proposal {proposal.digest[:8]!r}..."
             )
 
         # ADR-A §2: account binding (live adapter only)
@@ -417,14 +415,15 @@ class CreatePlaylistUseCase:
             try:
                 # position == current length, so earlier failures never leave gaps
                 await self._writer.add_playlist_item(playlist_id, item.video_id, position)
-            except Exception as exc:  # noqa: BLE001 - recorded per item, never retried here
+            except Exception as exc:
                 item_states[item.video_id] = "FAILED"
                 self._proposal_store.update_state(proposal_id, item_states=dict(item_states))
                 if isinstance(exc, CerebraError) and exc.code in self._STOP_CODES:
                     break
                 if not isinstance(exc, CerebraError) or exc.code == ErrorCode.TRANSIENT_ERROR:
                     self._audit.log_event(
-                        proposal_id, playlist_id,
+                        proposal_id,
+                        playlist_id,
                         f"ambiguous_failure:playlistItems.insert:{item.video_id}",
                         self._clock.utcnow_iso(),
                     )
@@ -468,13 +467,16 @@ class CreatePlaylistUseCase:
             }
 
         self._proposal_store.update_state(
-            proposal_id, state=ProposalState.CREATED, playlist_url=playlist_url,
+            proposal_id,
+            state=ProposalState.CREATED,
+            playlist_url=playlist_url,
             failed_item_ids=[],
         )
         self._quota.release(
             general=max(
                 0,
-                proposal.quota_reservation_general - QUOTA_COSTS["playlists.insert"]
+                proposal.quota_reservation_general
+                - QUOTA_COSTS["playlists.insert"]
                 - len(proposal.items) * QUOTA_COSTS["playlistItems.insert"],
             )
         )

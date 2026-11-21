@@ -2,10 +2,12 @@
 
 No other module imports concrete infrastructure classes directly.
 """
+
 from __future__ import annotations
 
+from collections.abc import Callable
 from dataclasses import dataclass
-from typing import Any, Callable, Optional
+from typing import Any
 
 from cerebra.adapters.fixtures.fixture_adapter import (
     FixtureChannelReader,
@@ -55,6 +57,7 @@ class _LiveAuthFlag:
 @dataclass
 class Container:
     """All assembled use cases and shared infrastructure."""
+
     quota: QuotaLedger
     find_similar: FindSimilarUseCase
     recommend: RecommendVideosUseCase
@@ -63,12 +66,12 @@ class Container:
     create_pl: CreatePlaylistUseCase
     is_authenticated: Any  # bool in fixture mode; a live flag object (bool()-able) otherwise
     # Added in Phase 3/4 (defaults keep older call sites working)
-    recover: Optional[RecoverPlaylistUseCase] = None
-    proposal_store: Optional[ProposalStore] = None
-    approvals: Optional[ApprovalStore] = None
-    oauth: Optional[OAuthManager] = None
-    clock: Optional[Clock] = None
-    live_adapter: Optional[LiveYouTubeAdapter] = None
+    recover: RecoverPlaylistUseCase | None = None
+    proposal_store: ProposalStore | None = None
+    approvals: ApprovalStore | None = None
+    oauth: OAuthManager | None = None
+    clock: Clock | None = None
+    live_adapter: LiveYouTubeAdapter | None = None
     live: bool = False
 
 
@@ -76,9 +79,9 @@ def build_container(
     cfg: Config,
     use_fixtures: bool = True,
     *,
-    oauth: Optional[OAuthManager] = None,
-    service_factory: Optional[Callable[[Any, str], Any]] = None,
-    clock: Optional[Clock] = None,
+    oauth: OAuthManager | None = None,
+    service_factory: Callable[[Any, str], Any] | None = None,
+    clock: Clock | None = None,
 ) -> Container:
     """Build the dependency graph.
 
@@ -113,7 +116,8 @@ def build_container(
     else:
         # Quota survives restarts and resets at midnight Pacific (ADR-B).
         quota = PersistentQuotaLedger(
-            quota_store, clock,
+            quota_store,
+            clock,
             general_budget=cfg.daily_quota_budget,
             search_budget=cfg.search_quota_budget,
         )

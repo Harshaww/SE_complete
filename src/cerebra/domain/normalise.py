@@ -4,12 +4,12 @@ Accepts video URLs/IDs and channel URLs/handles/IDs.
 Normalises to plain video_id or channel_id.
 Rejects malformed references BEFORE any API call.
 """
+
 from __future__ import annotations
 
 import re
 
 from cerebra.domain.errors import (
-    CerebraError,
     invalid_channel_ref,
     invalid_video_id,
 )
@@ -19,18 +19,10 @@ from cerebra.domain.errors import (
 _VIDEO_ID_RE = re.compile(r"^[A-Za-z0-9_-]{11}$")
 
 # URL patterns that contain the video ID
-_WATCH_URL_RE = re.compile(
-    r"(?:https?://)?(?:www\.)?youtube\.com/watch\?.*?v=([A-Za-z0-9_-]{11})"
-)
-_SHORT_URL_RE = re.compile(
-    r"(?:https?://)?(?:www\.)?youtube\.com/shorts/([A-Za-z0-9_-]{11})"
-)
-_YOUTU_BE_RE = re.compile(
-    r"(?:https?://)?youtu\.be/([A-Za-z0-9_-]{11})"
-)
-_EMBED_URL_RE = re.compile(
-    r"(?:https?://)?(?:www\.)?youtube\.com/embed/([A-Za-z0-9_-]{11})"
-)
+_WATCH_URL_RE = re.compile(r"(?:https?://)?(?:www\.)?youtube\.com/watch\?.*?v=([A-Za-z0-9_-]{11})")
+_SHORT_URL_RE = re.compile(r"(?:https?://)?(?:www\.)?youtube\.com/shorts/([A-Za-z0-9_-]{11})")
+_YOUTU_BE_RE = re.compile(r"(?:https?://)?youtu\.be/([A-Za-z0-9_-]{11})")
+_EMBED_URL_RE = re.compile(r"(?:https?://)?(?:www\.)?youtube\.com/embed/([A-Za-z0-9_-]{11})")
 
 # ── Channel ────────────────────────────────────────────────────────────────────
 # Channel IDs start with "UC" followed by 22 base64url chars (total 24)
@@ -41,15 +33,9 @@ _HANDLE_RE = re.compile(r"^@[A-Za-z0-9_.\\-]{1,30}$")
 _CHANNEL_ID_URL_RE = re.compile(
     r"(?:https?://)?(?:www\.)?youtube\.com/channel/(UC[A-Za-z0-9_-]{22})"
 )
-_HANDLE_URL_RE = re.compile(
-    r"(?:https?://)?(?:www\.)?youtube\.com/@([A-Za-z0-9_.\\-]{1,30})"
-)
-_CUSTOM_URL_RE = re.compile(
-    r"(?:https?://)?(?:www\.)?youtube\.com/c/([A-Za-z0-9_.\\-]{1,100})"
-)
-_USER_URL_RE = re.compile(
-    r"(?:https?://)?(?:www\.)?youtube\.com/user/([A-Za-z0-9_.\\-]{1,100})"
-)
+_HANDLE_URL_RE = re.compile(r"(?:https?://)?(?:www\.)?youtube\.com/@([A-Za-z0-9_.\\-]{1,30})")
+_CUSTOM_URL_RE = re.compile(r"(?:https?://)?(?:www\.)?youtube\.com/c/([A-Za-z0-9_.\\-]{1,100})")
+_USER_URL_RE = re.compile(r"(?:https?://)?(?:www\.)?youtube\.com/user/([A-Za-z0-9_.\\-]{1,100})")
 
 
 def normalise_video_ref(ref: str) -> str:
