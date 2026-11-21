@@ -23,7 +23,7 @@ class TestRedactText:
         [
             "ya29.a0AfH6SMBexampleexampleexample",
             "1//0gExampleRefreshTokenValue_abcdef-123",
-            "AIzaSyExampleExampleExampleExample12345",
+            "AIzaSyExampleExampleExampleExample12345",  # gitleaks:allow
             "GOCSPX-ExampleSecretValue12",
             "123456789012-abcdefghijklmnopqrstuvwx.apps.googleusercontent.com",
             "Authorization: Bearer abcdefghijklmnop.1234",
