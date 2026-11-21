@@ -1,0 +1,10 @@
+title = "cerebra gitleaks config"
+
+[extend]
+useDefault = true
+
+# NFR-SE-2: redactor tests deliberately contain fake secret-shaped strings.
+[[allowlists]]
+description = "fake key shapes in redactor test (NFR-SE-2)"
+targetRules = ["gcp-api-key"]
+paths = ['''tests/unit/test_redact_results\.py''']
