@@ -253,7 +253,8 @@ class TestNoSecretsInFixtures:
         for root, _, files in os.walk(fixtures_dir):
             for f in files:
                 if f.endswith(".json"):
-                    content = open(os.path.join(root, f)).read()
+                    with open(os.path.join(root, f), encoding="utf-8") as fh:
+                        content = fh.read()
                     # Should not contain real email patterns
                     matches = email_re.findall(content)
                     assert not matches, f"Possible real email in fixture {f}: {matches}"
