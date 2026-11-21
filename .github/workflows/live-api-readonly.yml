@@ -33,6 +33,13 @@ jobs:
             --tb=short \
             --junitxml=live-results.xml \
             -k "not write"
-      - name: Redact and upload results
+      - name: Redact results (NFR-SE-2)
         if: always()
         run: python scripts/redact_results.py live-results.xml
+      - name: Upload redacted results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: live-readonly-results
+          path: live-results.xml
+          if-no-files-found: ignore

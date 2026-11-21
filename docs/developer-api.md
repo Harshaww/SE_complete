@@ -116,6 +116,8 @@ HTTP mapping: 401→`AUTH_EXPIRED`; 403 `quotaExceeded|dailyLimitExceeded`→`QU
 | `CEREBRA_USE_FIXTURES` | `0` | `1` → fixture adapter (CI) |
 | `CEREBRA_USE_KEYRING` | `1` | `0` → file token store only |
 | `CEREBRA_TOKEN_FILE` | `~/.config/cerebra/token.json` | fallback token file (0600) |
+| `CEREBRA_REFRESH_TOKEN` | - | headless runs (scheduled live CI): refresh token used in memory only, never stored or logged |
+| `CEREBRA_REFRESH_TOKEN_SCOPES` | `youtube.readonly` | scopes that token carries (space/comma separated); declare `youtube` for the write test |
 | `CEREBRA_INTERACTIVE_AUTH` | `1` | allow browser consent from `create_playlist`; `0` → `INSUFFICIENT_SCOPE` |
 | `CEREBRA_DATA_DIR` | `~/.cerebra` | SQLite database |
 | `CEREBRA_QUOTA_BUDGET` / `CEREBRA_SEARCH_BUDGET` | `10000` / `100` | pools |
@@ -131,3 +133,23 @@ PYTHONPATH=src pytest tests/ --cov=cerebra --cov-report=term-missing
 No test touches the network. `tests/support/fake_youtube.py` mimics the googleapiclient
 resource objects (and records every call); `tests/support/live_env.py` builds a fully wired
 live container on top of it. A new adapter must pass `tests/contract/`.
+
+### Live API suites (manual / scheduled only)
+
+`tests/integration/test_live_readonly.py` (marker `live_readonly`) and
+`tests/integration/test_live_write.py` (marker `live_write`) call the REAL YouTube API. They are
+deselected by default (`addopts` in `pyproject.toml`) and skip themselves without credentials, so
+PR CI never reaches them (NFR-TE-1, TR-5). They run only from `.github/workflows/live-api-readonly.yml`
+(weekly, strict budget) and `live-api-write.yml` (manual; human types the confirmation phrase).
+
+```bash
+# local manual run, throwaway account only
+export GOOGLE_CLIENT_ID=... GOOGLE_CLIENT_SECRET=... CEREBRA_REFRESH_TOKEN=...
+export CEREBRA_QUOTA_BUDGET=500 CEREBRA_SEARCH_BUDGET=5
+PYTHONPATH=src pytest tests/integration -m live_readonly -v
+```
+
+The write test creates ONE private playlist named `CEREBRA-CI-TEST-<run id>` through the real
+approval path and never edits or deletes anything (NFR-SA-2); the account owner removes the
+playlist by hand. `tests/integration/test_live_write_dryrun.py` runs the same flow against the
+in-memory double on every PR. Results are passed through `scripts/redact_results.py` before upload.

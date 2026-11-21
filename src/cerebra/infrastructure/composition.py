@@ -127,6 +127,8 @@ def build_container(
             cfg.google_client_secret,
             clock,
             interactive=cfg.interactive_auth,
+            env_refresh_token=cfg.refresh_token,
+            env_refresh_token_scopes=cfg.refresh_token_scopes,
         )
         live_adapter = LiveYouTubeAdapter(
             quota, clock, oauth, api_key=cfg.youtube_api_key, service_factory=service_factory

@@ -434,3 +434,104 @@ class TestRevoke:
         m, st = manager(post=lambda u, **k: SimpleNamespace(status_code=400))
         st.save_token(token_record())
         assert m.revoke()["revoked_remotely"] is False
+
+
+def headless_manager(*, scopes="", refresh=None, store=None, interactive=True, token="1//env-rt"):
+    store = store or InMemoryTokenStore()
+    return OAuthManager(
+        store,
+        "cid",
+        "csecret",
+        FakeClock(NOW),
+        interactive=interactive,
+        flow_factory=lambda *a: pytest.fail("headless runs must never open a browser"),
+        refresh_fn=refresh,
+        stderr=io.StringIO(),
+        env_refresh_token=token,
+        env_refresh_token_scopes=scopes,
+    ), store
+
+
+def _refresh_ok(counter):
+    def refresh(c):
+        from datetime import datetime
+
+        counter.append(1)
+        c.token = "headless-access"
+        c.expiry = datetime(2099, 1, 1)
+
+    return refresh
+
+
+# mark: FR-5.2, FR-5.3, NFR-SE-2, TR-5
+class TestHeadlessRefreshToken:
+    def test_default_scope_is_readonly_and_authenticated(self):
+        m, _ = headless_manager()
+        assert m.headless and m.is_authenticated()
+        assert m.granted_scopes() == {SCOPE_READONLY}
+        assert not m.has_scope(SCOPE_WRITE)
+
+    def test_declared_scopes_split_on_space_and_comma(self):
+        m, _ = headless_manager(scopes=f"{SCOPE_READONLY}, {SCOPE_WRITE}")
+        assert m.granted_scopes() == {SCOPE_READONLY, SCOPE_WRITE}
+        assert m.has_scope(SCOPE_WRITE)
+
+    def test_refreshes_in_memory_and_never_persists(self):
+        calls: list[int] = []
+        m, store = headless_manager(refresh=_refresh_ok(calls))
+        assert m.get_credentials().token == "headless-access"
+        assert store.load_token() is None  # NFR-SE-2: nothing written
+        assert calls == [1]
+
+    def test_access_token_cached_between_calls(self):
+        calls: list[int] = []
+        m, _ = headless_manager(refresh=_refresh_ok(calls))
+        m.get_credentials()
+        m.get_credentials()
+        m.ensure_valid_token()
+        assert calls == [1]  # one refresh, not one per API call
+
+    def test_env_token_wins_over_stored_token(self):
+        m, store = headless_manager(refresh=_refresh_ok([]))
+        store.save_token(token_record(scopes=(SCOPE_WRITE,)))
+        assert m.granted_scopes() == {SCOPE_READONLY}
+
+    def test_missing_scope_never_opens_browser(self):
+        m, _ = headless_manager()  # flow_factory fails the test if called
+        with pytest.raises(CerebraError) as e:
+            m.ensure_scope(SCOPE_WRITE)
+        assert e.value.code == ErrorCode.INSUFFICIENT_SCOPE
+
+    def test_revoked_env_token_is_auth_expired(self):
+        def refresh(c):
+            raise RefreshError("invalid_grant")
+
+        m, _ = headless_manager(refresh=refresh)
+        with pytest.raises(CerebraError) as e:
+            m.get_credentials()
+        assert e.value.code == ErrorCode.AUTH_EXPIRED
+
+    def test_status_and_repr_never_leak_the_token(self):
+        m, _ = headless_manager()
+        assert "1//env-rt" not in json.dumps(m.status())
+        assert m.status()["testing_mode_expiry_hint_hours"] is None  # issue time unknown
+
+    def test_empty_env_token_means_store_mode(self):
+        m, store = headless_manager(token="   ")
+        assert not m.headless and not m.is_authenticated()
+        store.save_token(token_record())
+        assert m.is_authenticated()
+
+
+# mark: FR-5.2, NFR-SE-2
+class TestConfigSecretsHidden:
+    def test_secrets_not_in_repr(self, monkeypatch):
+        from cerebra.config import Config
+
+        monkeypatch.setenv("CEREBRA_REFRESH_TOKEN", "1//super-secret-rt")
+        monkeypatch.setenv("GOOGLE_CLIENT_SECRET", "super-secret-cs")
+        monkeypatch.setenv("CEREBRA_YOUTUBE_API_KEY", "AIza-super-secret")
+        cfg = Config()
+        assert cfg.refresh_token == "1//super-secret-rt"
+        text = repr(cfg)
+        assert "super-secret" not in text

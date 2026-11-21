@@ -56,12 +56,22 @@ class Config:
     # OAuth (TBD-10) — IDs from env, never from source
     google_client_id: str = field(default_factory=lambda: os.environ.get("GOOGLE_CLIENT_ID", ""))
     google_client_secret: str = field(
-        default_factory=lambda: os.environ.get("GOOGLE_CLIENT_SECRET", "")
+        default_factory=lambda: os.environ.get("GOOGLE_CLIENT_SECRET", ""), repr=False
+    )
+
+    # Headless runs (scheduled live-API CI): a refresh token from the environment is used
+    # in memory only and never written to the token store (NFR-SE-2). Scopes it carries
+    # are declared via CEREBRA_REFRESH_TOKEN_SCOPES (space/comma separated; default readonly).
+    refresh_token: str = field(
+        default_factory=lambda: os.environ.get("CEREBRA_REFRESH_TOKEN", ""), repr=False
+    )
+    refresh_token_scopes: str = field(
+        default_factory=lambda: os.environ.get("CEREBRA_REFRESH_TOKEN_SCOPES", "")
     )
 
     # Optional API key for PUBLIC reads when no OAuth token exists (env only, never in code).
     youtube_api_key: str = field(
-        default_factory=lambda: os.environ.get("CEREBRA_YOUTUBE_API_KEY", "")
+        default_factory=lambda: os.environ.get("CEREBRA_YOUTUBE_API_KEY", ""), repr=False
     )
 
     # Adapter selection (NFR-TE-1: CI sets CEREBRA_USE_FIXTURES=1; live is the default).

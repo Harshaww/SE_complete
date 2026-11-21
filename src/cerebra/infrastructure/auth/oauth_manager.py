@@ -14,6 +14,7 @@ from __future__ import annotations
 
 import contextlib
 import json
+import re
 import sys
 from collections.abc import Callable
 from typing import Any, TextIO
@@ -68,6 +69,8 @@ class OAuthManager:
         refresh_fn: Callable[[Any], None] | None = None,
         http_post: Callable[..., Any] | None = None,
         stderr: TextIO | None = None,
+        env_refresh_token: str = "",
+        env_refresh_token_scopes: str = "",
     ) -> None:
         self._store = token_store
         self._client_id = client_id
@@ -78,18 +81,44 @@ class OAuthManager:
         self._refresh_fn = refresh_fn or _default_refresh
         self._http_post = http_post
         self._err = stderr or sys.stderr
+        # Headless mode (CEREBRA_REFRESH_TOKEN): held in memory only, never persisted.
+        self._env_refresh_token = env_refresh_token.strip()
+        scopes = [s for s in re.split(r"[\s,]+", env_refresh_token_scopes) if s]
+        self._env_scopes = scopes or [SCOPE_READONLY]
+        self._headless_creds: Any = None  # in-memory access-token cache (headless only)
+
+    # ── Credential record: env refresh token (headless) wins over the store ──
+
+    @property
+    def headless(self) -> bool:
+        """True when credentials come from CEREBRA_REFRESH_TOKEN rather than the store."""
+        return bool(self._env_refresh_token)
+
+    def _load_record(self) -> dict[str, object] | None:
+        if self._env_refresh_token:
+            return {
+                "credentials": {
+                    "refresh_token": self._env_refresh_token,
+                    "client_id": self._client_id,
+                    "client_secret": self._client_secret,
+                    "token_uri": GOOGLE_TOKEN_URI,
+                    "scopes": list(self._env_scopes),
+                },
+                "scopes": list(self._env_scopes),
+            }
+        return self._store.load_token()
 
     # ── Introspection (never returns token material) ─────────────────────────
 
     def is_authenticated(self) -> bool:
-        data = self._store.load_token()
+        data = self._load_record()
         if not data:
             return False
         info = data.get("credentials")
         return isinstance(info, dict) and bool(info.get("refresh_token") or info.get("token"))
 
     def granted_scopes(self) -> set[str]:
-        data = self._store.load_token()
+        data = self._load_record()
         if not data:
             return set()
         return {str(s) for s in data.get("scopes", [])}  # type: ignore[union-attr]
@@ -98,7 +127,7 @@ class OAuthManager:
         return scope_satisfies(self.granted_scopes(), scope)
 
     def authorised_at(self) -> float | None:
-        data = self._store.load_token()
+        data = self._load_record()
         if not data:
             return None
         value = data.get("authorised_at")
@@ -144,7 +173,9 @@ class OAuthManager:
 
     def ensure_valid_token(self) -> Any:
         """Load + refresh credentials if needed (called before every API request, ADR-D §4)."""
-        data = self._store.load_token()
+        if self.headless and getattr(self._headless_creds, "valid", False):
+            return self._headless_creds
+        data = self._load_record()
         if not data or not isinstance(data.get("credentials"), dict):
             raise auth_required()
         try:
@@ -153,6 +184,7 @@ class OAuthManager:
             # Stored token is incomplete/corrupt (e.g. no refresh_token): need a fresh login.
             raise auth_expired() from None
         if getattr(creds, "valid", False):
+            self._headless_creds = creds if self.headless else None
             return creds
         if not getattr(creds, "refresh_token", None):
             raise auth_expired()
@@ -162,8 +194,11 @@ class OAuthManager:
             raise
         except Exception as exc:
             raise self._classify_refresh_failure(exc) from exc
-        data["credentials"] = json.loads(creds.to_json())
-        self._store.save_token(data)
+        if self.headless:  # headless tokens are never persisted (NFR-SE-2)
+            self._headless_creds = creds
+        else:
+            data["credentials"] = json.loads(creds.to_json())
+            self._store.save_token(data)
         return creds
 
     def _classify_refresh_failure(self, exc: Exception) -> CerebraError:
@@ -217,6 +252,8 @@ class OAuthManager:
 
     def ensure_scope(self, scope: str) -> Any:
         """Return valid credentials covering ``scope``, upgrading interactively if allowed."""
+        if self.headless and not self.has_scope(scope):
+            raise insufficient_scope(scope)  # never open a browser in headless runs
         if not self.is_authenticated():
             if not self._interactive:
                 raise auth_required()
@@ -272,7 +309,7 @@ class OAuthManager:
 
     def revoke(self) -> dict[str, object]:
         """Revoke at Google (best effort) and always delete the local token."""
-        data = self._store.load_token()
+        data = self._load_record()
         remote_revoked = False
         if data and isinstance(data.get("credentials"), dict):
             info: dict[str, Any] = data["credentials"]  # type: ignore[assignment]

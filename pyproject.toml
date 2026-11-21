@@ -58,7 +58,12 @@ markers = [
   "security: security tests",
   "concurrency: concurrency tests",
   "performance: performance tests",
+  "live_readonly: REAL YouTube API, read-only (scheduled/manual workflow only)",
+  "live_write: REAL YouTube API, creates one private test playlist (manual workflow only)",
 ]
+# Live suites never run by default or in PR CI (NFR-TE-1, TR-5); the live workflows pass an
+# explicit -m expression, which overrides this one.
+addopts = "-m 'not live_readonly and not live_write'"
 
 [tool.ruff]
 target-version = "py311"
@@ -75,6 +80,7 @@ ignore = [
 ]
 
 [tool.ruff.lint.per-file-ignores]
+"scripts/**" = ["T201"]  # CLI helpers report on stdout/stderr by design
 "tests/**" = [
   "S105", "S106", "S107",  # fake tokens in test data (never real secrets, NFR-SE-2)
   "S311", "T201", "N802", "N805", "RUF012", "RUF059", "B905", "SIM115",
