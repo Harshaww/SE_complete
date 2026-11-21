@@ -8,7 +8,7 @@ from cerebra.domain.normalise import normalise_channel_ref, normalise_video_ref
 # ── Video ID normalisation ────────────────────────────────────────────────────
 
 
-# mark: FR-1.1, FR-1.2
+# mark: FR-1.1, FR-1.2, TR-1, TR-4
 class TestNormaliseVideoRef:
     def test_plain_video_id_accepted(self):
         assert normalise_video_ref("dQw4w9WgXcQ") == "dQw4w9WgXcQ"

@@ -13,7 +13,7 @@ from cerebra.domain.errors import ErrorCode
 from cerebra.mcp_tools.validation import validate_digest, validate_proposal_id
 
 
-# mark: FR-4.6, FR-4.7, NFR-SA-1, BR-2
+# mark: FR-4.6, FR-4.7, NFR-SA-1, BR-2, BR-1
 class TestApprovalProvenance:
     """ADR-A: approval must be bound to proposal_id + digest; agent-generated approval rejected."""
 

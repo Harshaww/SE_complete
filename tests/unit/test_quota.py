@@ -3,7 +3,7 @@
 from cerebra.domain.quota import QUOTA_COSTS, QuotaLedger
 
 
-# mark: FR-5.7, FR-5.8, BR-5
+# mark: FR-5.7, FR-5.8, BR-5, NFR-SA-4, FR-5.11, TR-1
 class TestQuotaLedger:
     def test_initial_remaining_full(self):
         q = QuotaLedger(general_budget=10000, search_budget=100)

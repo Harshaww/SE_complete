@@ -150,7 +150,7 @@ class TestFindSimilarCoverage:
 # ── AnalyseEngagementUseCase coverage ────────────────────────────────────────
 
 
-# mark: FR-3.2, FR-3.3, FR-3.8
+# mark: FR-3.2, FR-3.3, FR-3.8, FR-3.4, FR-3.5, FR-3.6
 class TestAnalyseCoverage:
     """Cover analyse application branches (FR-3)."""
 
@@ -230,7 +230,7 @@ class TestAnalyseCoverage:
 # ── RecommendVideosUseCase coverage ──────────────────────────────────────────
 
 
-# mark: FR-2.2, FR-2.4, FR-2.6
+# mark: FR-2.2, FR-2.4, FR-2.6, FR-2.3
 class TestRecommendCoverage:
     """Cover recommend application branches (FR-2)."""
 

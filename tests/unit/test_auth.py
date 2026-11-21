@@ -68,7 +68,7 @@ class FakeKeyring:
         del self.d[(s, u)]
 
 
-# mark: FR-5.1, FR-5.2, FR-5.5, CON-3, NFR-SE-2
+# mark: FR-5.1, FR-5.2, FR-5.5, CON-3, NFR-SE-2, NFR-SE-3
 class TestFileTokenStore:
     def test_roundtrip_and_owner_only_modes(self, tmp_path):
         path = tmp_path / "cfg" / "cerebra" / "token.json"
@@ -116,7 +116,7 @@ class TestFileTokenStore:
         assert list(tmp_path.iterdir()) == []
 
 
-# mark: FR-5.1, FR-5.2, FR-5.5, CON-3, NFR-SE-2
+# mark: FR-5.1, FR-5.2, FR-5.5, CON-3, NFR-SE-2, NFR-SE-3
 class TestKeyringAndFallback:
     def test_keyring_roundtrip(self):
         kr = KeyringTokenStore(keyring_module=FakeKeyring())
@@ -224,7 +224,7 @@ class FakeFlow:
         return FakeFlowCreds(self.scopes)
 
 
-# mark: FR-5.1, FR-5.2, FR-5.5, CON-3, NFR-SE-2
+# mark: FR-5.1, FR-5.2, FR-5.5, CON-3, NFR-SE-2, NFR-SE-1
 class TestScopes:
     def test_hierarchy(self):
         assert scope_satisfies({SCOPE_WRITE}, SCOPE_READONLY)
@@ -304,7 +304,7 @@ class TestTokenLifecycle:
         assert e.value.code == ErrorCode.TRANSIENT_ERROR
 
 
-# mark: FR-5.1, FR-5.2, FR-5.5, CON-3, NFR-SE-2
+# mark: FR-5.1, FR-5.2, FR-5.5, CON-3, NFR-SE-2, TR-4, FR-5.4
 class TestTestingModeExpiry:
     """CON-3: refresh tokens of 'Testing' apps die after 7 days."""
 

@@ -28,7 +28,7 @@ class TestWeights:
         assert W_TFIDF > W_CATEGORY + W_CHANNEL + W_LANGUAGE + W_DURATION_BAND
 
 
-# mark: FR-1.5, FR-1.6, FR-1.8, FR-1.9, BR-4
+# mark: FR-1.5, FR-1.6, FR-1.8, FR-1.9, BR-4, NFR-RE-3, TR-1
 class TestRankVideos:
     def test_excludes_seed(self):
         seed = make_video(video_id="seed01ABCDE")

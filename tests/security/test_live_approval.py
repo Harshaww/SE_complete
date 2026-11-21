@@ -34,7 +34,7 @@ def env(tmp_path):
     return make_env(tmp_path)
 
 
-# mark: FR-4.6, FR-4.7, NFR-SA-1, NFR-SA-2, ADR-A
+# mark: FR-4.6, FR-4.7, NFR-SA-1, NFR-SA-2, ADR-A, BR-1, BR-2
 class TestNoWriteWithoutHumanApproval:
     def test_digest_alone_is_not_enough(self, env):
         prop = env.propose()

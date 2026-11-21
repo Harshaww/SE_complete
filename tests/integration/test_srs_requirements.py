@@ -210,3 +210,25 @@ class TestHumanReadableResults:
         for r in results:
             assert r.url == f"https://www.youtube.com/watch?v={r.video_id}"
             assert ":" in r.duration_human()  # e.g. 5:00 / 1:02:03
+
+
+# mark: FR-3.4
+class TestMonthlyTrends:
+    def test_playlisted_videos_counted_per_month_by_add_date(self, tmp_path):
+        from tests.support.fake_youtube import FakeYouTube
+        from tests.support.live_env import py_channel, python_catalog
+
+        videos = python_catalog(n=6, seconds=300)
+        fake = FakeYouTube(videos, [py_channel()])
+        fake.pl_store["PLtrend"] = {
+            "snippet": {"title": "mine", "description": ""},
+            "status": {"privacyStatus": "private"},
+        }
+        fake.playlist_videos["PLtrend"] = [
+            {"video_id": videos[0].video_id, "added": "2026-03-02T10:00:00Z"},
+            {"video_id": videos[1].video_id, "added": "2026-03-20T10:00:00Z"},
+            {"video_id": videos[2].video_id, "added": "2026-05-11T10:00:00Z"},
+        ]
+        env = make_env(tmp_path, fake)
+        report = run(env.container.analyse.analyse(top_k=3))
+        assert report["monthly_trends"] == {"2026-03": 2, "2026-05": 1}  # sorted, per month

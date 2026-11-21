@@ -25,7 +25,7 @@ def code_of(coro):
     return exc.value.code
 
 
-# mark: CON-1, FR-5.8, NFR-SA-2, CON-5
+# mark: CON-1, FR-5.8, NFR-SA-2, CON-5, BR-5, FR-4.11, FR-5.11, TR-6
 class TestQuotaBeforeEveryCall:
     def test_over_budget_refused_with_zero_api_calls(self):
         fake = fixture_backed_fake()
@@ -63,7 +63,7 @@ class TestQuotaBeforeEveryCall:
         assert st["general"]["used"] == 0 and st["general"]["reserved"] == 0
 
 
-# mark: CON-1, FR-5.8, NFR-SA-2, CON-5
+# mark: CON-1, FR-5.8, NFR-SA-2, CON-5, FR-4.12, FR-5.10, NFR-RE-1, NFR-RE-2, TR-4, TR-2
 class TestErrorMapping:
     @pytest.mark.parametrize(
         "status,reason,expected",
@@ -126,7 +126,7 @@ class TestErrorMapping:
             run(adapter._execute("videos.delete", lambda s: s))
 
 
-# mark: CON-1, FR-5.8, NFR-SA-2, CON-5
+# mark: CON-1, FR-5.8, NFR-SA-2, CON-5, NFR-RE-2, TR-4
 class TestWritesNeverRetried:
     def test_playlist_insert_single_attempt_on_5xx(self):
         fake = fixture_backed_fake()
@@ -206,7 +206,7 @@ class TestWriteRequests:
         assert code_of(adapter.ensure_write_access()) == ErrorCode.AUTH_REQUIRED
 
 
-# mark: CON-1, FR-5.8, NFR-SA-2, CON-5
+# mark: CON-1, FR-5.8, NFR-SA-2, CON-5, NFR-SE-1
 class TestAuthModes:
     def test_reads_use_readonly_scope(self):
         adapter, _, auth, _ = make_live(fixture_backed_fake())
@@ -224,7 +224,7 @@ class TestAuthModes:
         assert code_of(adapter.get_liked_videos()) == ErrorCode.AUTH_REQUIRED
 
 
-# mark: CON-1, FR-5.8, NFR-SA-2, CON-5
+# mark: CON-1, FR-5.8, NFR-SA-2, CON-5, TR-2
 class TestReadBehaviour:
     def test_batches_of_50(self):
         fake = fixture_backed_fake()

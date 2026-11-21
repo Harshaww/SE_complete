@@ -246,7 +246,7 @@ class TestMCPProposePlaylst:
         assert exc.value.code == ErrorCode.MISSING_CONSTRAINT
 
 
-# mark: FR-5.15, NFR-US-1
+# mark: FR-5.15, NFR-US-1, TR-4, TR-3
 class TestUniformErrors:
     """FR-5.15: errors in uniform structure (code, message, retryable, action)."""
 

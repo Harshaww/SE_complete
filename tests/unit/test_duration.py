@@ -5,7 +5,7 @@ import pytest
 from cerebra.domain.duration import parse_duration, seconds_to_iso8601
 
 
-# mark: FR-4.2
+# mark: FR-4.2, TR-1, TR-4
 class TestParseDuration:
     def test_full_hms(self):
         assert parse_duration("PT1H2M3S") == 3723

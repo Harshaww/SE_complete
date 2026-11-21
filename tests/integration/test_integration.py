@@ -89,7 +89,7 @@ class TestCacheIntegration:
         assert stats["active_entries"] <= 5
 
 
-# mark: FR-4.5
+# mark: FR-4.5, TR-2
 class TestProposalStoreIntegration:
     def test_save_load_round_trip(self, proposal_store):
         pid = str(uuid.uuid4())
