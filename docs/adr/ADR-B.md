@@ -44,9 +44,9 @@ Key unit costs (verified):
 
 ```python
 class QuotaLedger:
-    general_budget: int    # default 10_000 units/day
-    search_budget: int     # default 100 calls/day (separate pool)
-    write_budget: int      # derived: playlists.insert + playlistItems.insert budget
+    general_budget: int  # default 10_000 units/day
+    search_budget: int  # default 100 calls/day (separate pool)
+    write_budget: int  # derived: playlists.insert + playlistItems.insert budget
 ```
 
 Each pool tracked independently. `QuotaLedger` is in-memory and thread-safe (threading.Lock). Persistent high-watermark stored in `SQLiteQuotaStore` for cross-restart accounting.
@@ -62,9 +62,9 @@ Before the first network call in any workflow:
 ```python
 # Example: propose_playlist with 10 candidates, no search
 estimate = QuotaEstimate(
-    general=10 * 1,   # videos.list for candidates
-    search=0,         # no search.list used
-    write=50 + 10*50, # playlists.insert + 10 × playlistItems.insert
+    general=10 * 1,  # videos.list for candidates
+    search=0,  # no search.list used
+    write=50 + 10 * 50,  # playlists.insert + 10 × playlistItems.insert
 )
 quota.reserve(estimate)  # atomic; raises if any pool overflows
 ```

@@ -34,8 +34,9 @@ same protocols (LSP). `tests/contract/` runs the same suites against both.
 
 ```python
 from cerebra.infrastructure.composition import build_container
-container = build_container(cfg, use_fixtures=True)    # offline, no OAuth (CI)
-container = build_container(cfg, use_fixtures=False)   # live adapter + OAuth + CLI approval
+
+container = build_container(cfg, use_fixtures=True)  # offline, no OAuth (CI)
+container = build_container(cfg, use_fixtures=False)  # live adapter + OAuth + CLI approval
 ```
 
 Live mode always sets `require_approval=True` and binds proposals to the account.

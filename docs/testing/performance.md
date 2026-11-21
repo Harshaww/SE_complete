@@ -29,6 +29,7 @@ Timings measured using Python's `time.perf_counter()` around use case calls in t
 
 ```python
 import time
+
 start = time.perf_counter()
 result = await use_case.find_similar_videos("dQw4w9WgXcQ", 10)
 elapsed_ms = (time.perf_counter() - start) * 1000
