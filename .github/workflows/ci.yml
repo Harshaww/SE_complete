@@ -56,7 +56,7 @@ jobs:
 
       - name: Coverage report
         run: |
-          pytest tests/unit tests/property \
+          pytest tests/ \
             --cov=cerebra \
             --cov-report=term-missing \
             --cov-report=xml \
