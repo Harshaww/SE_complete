@@ -60,7 +60,6 @@ class ProposalState(str, Enum):
             ProposalState.PARTIAL: frozenset(
                 {
                     ProposalState.CREATED,
-                    ProposalState.FAILED,
                 }
             ),
             ProposalState.CREATED: frozenset(),

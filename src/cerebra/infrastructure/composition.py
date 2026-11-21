@@ -38,6 +38,7 @@ from cerebra.infrastructure.quota.adapter_metered import AdapterMeteredQuota
 from cerebra.infrastructure.quota.persistent_ledger import PersistentQuotaLedger
 from cerebra.ports.interfaces import (
     ApprovalStore,
+    CacheStore,
     Clock,
     ProposalStore,
 )
@@ -73,6 +74,7 @@ class Container:
     clock: Clock | None = None
     live_adapter: LiveYouTubeAdapter | None = None
     live: bool = False
+    cache: CacheStore | None = None  # NFR-PV-2: `cerebra-cli clear-cache`
 
 
 def build_container(
@@ -92,7 +94,11 @@ def build_container(
     """
     cfg.ensure_data_dir()
     db = SQLiteDB(cfg.db_path)
-    cache = SQLiteCacheStore(db, max_size=cfg.cache_max_size)
+    cache = SQLiteCacheStore(
+        db,
+        max_size=cfg.cache_max_size,
+        max_ttl_seconds=cfg.cache_retention_days * 86400,
+    )
     proposal_store = SQLiteProposalStore(db)
     audit_log = SQLiteAuditLog(db)
     approvals = SQLiteApprovalStore(db)
@@ -209,4 +215,5 @@ def build_container(
         clock=clock,
         live_adapter=live_adapter,
         live=not use_fixtures,
+        cache=cache,
     )

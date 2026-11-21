@@ -6,6 +6,7 @@
     cerebra-cli recover <proposal_id>               # reconcile a PARTIAL write safely
     cerebra-cli pending                             # list proposals needing attention
     cerebra-cli status                              # auth / quota overview
+    cerebra-cli clear-cache                         # delete cached YouTube data (NFR-PV-2)
 
 Why ``approve`` exists: an MCP client (and the model behind it) can read every field of a
 proposal, including its digest, so passing the digest back proves nothing about a *human*.
@@ -181,6 +182,14 @@ class _Cli:
         )
         return EXIT_OK
 
+    def clear_cache(self) -> int:
+        """NFR-PV-2: delete every cached API response (likes, subscriptions, search results)."""
+        c = self._factory()
+        assert c.cache is not None
+        c.cache.clear_all()
+        self._emit({"cache_cleared": True})
+        return EXIT_OK
+
     def status(self) -> int:
         c = self._factory()
         out: dict[str, Any] = {"mode": "live" if c.live else "fixtures", "quota": c.quota.status()}
@@ -201,6 +210,7 @@ def build_parser() -> argparse.ArgumentParser:
     r = sub.add_parser("recover", help="safely finish an interrupted playlist write")
     r.add_argument("proposal_id")
     sub.add_parser("pending", help="list proposals that need recovery")
+    sub.add_parser("clear-cache", help="delete all locally cached YouTube data (NFR-PV-2)")
     sub.add_parser("status", help="show auth and quota status")
     return ap
 
@@ -230,6 +240,8 @@ def main(
             return cli.recover(args.proposal_id)
         if args.command == "pending":
             return cli.pending()
+        if args.command == "clear-cache":
+            return cli.clear_cache()
         return cli.status()
     except CerebraError as exc:
         print(f"error [{exc.code.value}]: {exc.message}", file=err or sys.stderr)

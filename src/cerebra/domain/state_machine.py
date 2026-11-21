@@ -3,7 +3,6 @@
 States: PROPOSED → CONFIRMED → CREATED | PARTIAL → CREATED
         PROPOSED → EXPIRED | CANCELLED
         CONFIRMED → FAILED
-        PARTIAL → FAILED
 """
 
 from __future__ import annotations

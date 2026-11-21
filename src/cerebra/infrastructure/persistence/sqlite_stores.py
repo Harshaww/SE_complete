@@ -221,9 +221,13 @@ class SQLiteProposalStore:
 class SQLiteCacheStore:
     """CacheStore backed by SQLite with TTL (FR-5.9, NFR-PV-2)."""
 
-    def __init__(self, db: SQLiteDB, max_size: int = 1000) -> None:
+    def __init__(
+        self, db: SQLiteDB, max_size: int = 1000, max_ttl_seconds: int | None = None
+    ) -> None:
         self._db = db
         self._max_size = max_size
+        # NFR-PV-2: configurable retention; no entry outlives it, whatever TTL the caller asks for.
+        self._max_ttl = max_ttl_seconds
 
     def get(self, key: str) -> object | None:
         rows = self._db.execute(
@@ -236,6 +240,8 @@ class SQLiteCacheStore:
 
     def set(self, key: str, value: object, ttl_seconds: int) -> None:
         blob = pickle.dumps(value)
+        if self._max_ttl is not None:
+            ttl_seconds = min(ttl_seconds, self._max_ttl)
         expires = time.time() + ttl_seconds
         self._db.execute(
             "INSERT OR REPLACE INTO cache (key, value_blob, expires_at) VALUES (?, ?, ?)",

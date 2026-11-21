@@ -18,7 +18,6 @@ class TestProposalStateMachine:
             (ProposalState.CONFIRMED, ProposalState.PARTIAL),
             (ProposalState.CONFIRMED, ProposalState.FAILED),
             (ProposalState.PARTIAL, ProposalState.CREATED),
-            (ProposalState.PARTIAL, ProposalState.FAILED),
         ],
     )
     def test_valid_transition(self, current, target):
@@ -35,6 +34,7 @@ class TestProposalStateMachine:
             (ProposalState.CONFIRMED, ProposalState.PROPOSED),  # backwards
             (ProposalState.CONFIRMED, ProposalState.EXPIRED),  # invalid
             (ProposalState.CONFIRMED, ProposalState.CANCELLED),
+            (ProposalState.PARTIAL, ProposalState.FAILED),  # SRS B.3: PARTIAL -> CREATED only
         ],
     )
     def test_invalid_transition_raises(self, current, target):
