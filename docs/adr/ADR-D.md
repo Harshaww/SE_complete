@@ -4,6 +4,7 @@
 **Date:** 2026-11-09  
 **Deciders:** SegmentationFault team  
 **SRS refs:** TBD-10, FR-5.1–5.5, CON-3, NFR-SA-2
+**Brain notes:** [OAuth scopes](../../brain/resources/youtube-api/oauth-scopes.md)  
 
 ---
 

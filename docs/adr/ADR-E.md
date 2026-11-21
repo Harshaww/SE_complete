@@ -4,6 +4,7 @@
 **Date:** 2026-11-09  
 **Deciders:** SegmentationFault team  
 **SRS refs:** TBD-2 through TBD-12, NFR-TE-1, NFR-PF-1
+**Brain notes:** [Cerebra overview](../../brain/projects/cerebra/overview.md)  
 
 ---
 

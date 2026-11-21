@@ -326,7 +326,7 @@ class TestReadBehaviour:
         assert code_of(adapter2.get_account_id()) == ErrorCode.NO_YOUTUBE_CHANNEL
 
 
-# mark: CON-1, FR-5.8, NFR-SA-2, CON-5
+# mark: CON-1, FR-5.8, NFR-SA-2, CON-5, FR-1.3
 class TestPureMappers:
     def test_video_mapping_edge_cases(self):
         v = la.video_from_resource(

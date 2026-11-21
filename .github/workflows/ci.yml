@@ -70,6 +70,9 @@ jobs:
       - name: Validate brain notes
         run: python scripts/validate_brain.py
 
+      - name: Check traceability matrix (PR-4)
+        run: python scripts/traceability.py
+
   # NFR-SE-6: dependency vulnerability scan
   audit:
     runs-on: ubuntu-latest

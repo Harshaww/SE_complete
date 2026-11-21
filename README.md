@@ -16,3 +16,13 @@ cerebra                                        # run the MCP server over stdio
 * [Architecture](docs/architecture.md) and [ADRs](docs/adr/)
 
 Results are based on liked videos, subscriptions and playlists - NOT on watch history.
+
+## Branching, review and releases (PR-6)
+
+* Policy (CON-7): every change (code, skills, brain notes) is merged through a pull request
+  with at least one human review and a green CI run (ruff, tests, secret scan, SKILL.md and
+  brain validation, pip-audit).
+* Branches: `feat/<topic>`, `fix/<topic>`, `docs/<topic>`; commit messages carry requirement IDs.
+* Releases are tagged `vMAJOR.MINOR.PATCH` on `main`; notable changes are recorded in
+  [CHANGELOG.md](CHANGELOG.md).
+* Live-API tests never run in PR CI (see `docs/developer-api.md`, "Live API suites").

@@ -232,3 +232,22 @@ class TestMonthlyTrends:
         env = make_env(tmp_path, fake)
         report = run(env.container.analyse.analyse(top_k=3))
         assert report["monthly_trends"] == {"2026-03": 2, "2026-05": 1}  # sorted, per month
+
+
+# mark: NFR-TE-1, TR-5
+class TestCiNeverCallsLiveApi:
+    ROOT = __import__("pathlib").Path(__file__).resolve().parents[2]
+
+    def test_live_suites_are_deselected_by_default(self):
+        text = (self.ROOT / "pyproject.toml").read_text(encoding="utf-8")
+        assert "not live_readonly and not live_write" in text
+
+    def test_pr_workflow_has_no_live_credentials(self):
+        ci = (self.ROOT / ".github/workflows/ci.yml").read_text(encoding="utf-8")
+        for secret in ("CEREBRA_REFRESH_TOKEN", "GOOGLE_CLIENT_SECRET", "CEREBRA_YOUTUBE_API_KEY"):
+            assert secret not in ci
+
+    def test_live_workflows_never_run_on_pull_requests(self):
+        for name in ("live-api-readonly.yml", "live-api-write.yml"):
+            wf = (self.ROOT / ".github/workflows" / name).read_text(encoding="utf-8")
+            assert "pull_request" not in wf

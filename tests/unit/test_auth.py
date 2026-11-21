@@ -224,7 +224,7 @@ class FakeFlow:
         return FakeFlowCreds(self.scopes)
 
 
-# mark: FR-5.1, FR-5.2, FR-5.5, CON-3, NFR-SE-2, NFR-SE-1
+# mark: FR-5.1, FR-5.2, FR-5.5, CON-3, NFR-SE-2, NFR-SE-1, TR-7
 class TestScopes:
     def test_hierarchy(self):
         assert scope_satisfies({SCOPE_WRITE}, SCOPE_READONLY)

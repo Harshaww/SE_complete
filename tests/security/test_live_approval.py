@@ -101,7 +101,7 @@ class TestNoWriteWithoutHumanApproval:
         assert writes(other) == []
 
 
-# mark: FR-4.6, FR-4.7, NFR-SA-1, NFR-SA-2, ADR-A
+# mark: FR-4.6, FR-4.7, NFR-SA-1, NFR-SA-2, ADR-A, NFR-SA-3
 class TestHappyPathAndSingleUse:
     def test_approve_then_create_writes_exactly_the_approved_items(self, env):
         prop = env.propose()

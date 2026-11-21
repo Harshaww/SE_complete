@@ -4,6 +4,7 @@
 **Date:** 2026-11-09  
 **Deciders:** SegmentationFault team  
 **SRS refs:** NFR-QU-1, FR-1.4, FR-5.8, FR-4.11, BR-5, TBD-4
+**Brain notes:** [Quota notes](../../brain/resources/youtube-api/quota-notes.md)  
 
 ---
 

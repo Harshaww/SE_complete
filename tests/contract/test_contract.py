@@ -81,7 +81,7 @@ class VideoReaderContractTests:
         assert isinstance(results, list)
 
 
-# mark: FR-5.17, CON-6, NFR-MA-1
+# mark: FR-5.17, CON-6, NFR-MA-1, FR-1.3
 class TestFixtureVideoReaderContract(VideoReaderContractTests):
     """Run contract suite against fixture adapter."""
 

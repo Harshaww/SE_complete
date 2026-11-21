@@ -184,7 +184,7 @@ class TestApprovalProvenance:
         assert exc.value.code == ErrorCode.PROPOSAL_NOT_FOUND
 
 
-# mark: NFR-SE-4, FR-5.14
+# mark: NFR-SE-4, FR-5.14, TR-7
 class TestInputSecurity:
     """NFR-SE-4: all parameters validated with strict patterns."""
 
@@ -239,7 +239,7 @@ class TestAuditLog:
         assert not columns & {"email", "user_id", "title"}
 
 
-# mark: NFR-SE-2, NFR-PV-1
+# mark: NFR-SE-2, NFR-PV-1, TR-7
 class TestNoSecretsInFixtures:
     """NFR-PV-1, NFR-SE-2: fixtures contain no real user data."""
 

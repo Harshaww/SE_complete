@@ -64,7 +64,7 @@ class TestValidateLimit:
             validate_limit("ten")
 
 
-# mark: FR-5.14, NFR-SE-4
+# mark: FR-5.14, NFR-SE-4, FR-4.1
 class TestValidateTopic:
     def test_valid(self):
         assert validate_topic("machine learning") == "machine learning"
@@ -78,7 +78,7 @@ class TestValidateTopic:
             validate_topic("x" * 501)
 
 
-# mark: FR-5.14
+# mark: FR-5.14, FR-4.1
 class TestValidateDurationSeconds:
     def test_valid(self):
         assert validate_duration_seconds(3600, "total") == 3600
@@ -142,7 +142,7 @@ class TestValidateDigest:
             validate_digest("g" * 64)
 
 
-# mark: FR-5.14, FR-4.9
+# mark: FR-5.14, FR-4.9, NFR-SA-3
 class TestValidatePrivacyStatus:
     def test_private(self):
         assert validate_privacy_status("private") == "private"
@@ -161,7 +161,7 @@ class TestValidatePrivacyStatus:
             validate_privacy_status("friends_only")
 
 
-# mark: NFR-SE-4, NFR-SE-5
+# mark: NFR-SE-4, NFR-SE-5, TR-7
 class TestSecurityValidation:
     def test_prompt_injection_in_reference_blocked(self):
         """NFR-SE-4: metadata / injected instructions don't bypass validation."""
