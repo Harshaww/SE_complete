@@ -26,6 +26,11 @@ This installs two commands: `cerebra` (the MCP server) and `cerebra-cli` (you, i
    export GOOGLE_CLIENT_ID="…"
    export GOOGLE_CLIENT_SECRET="…"
    ```
+
+   Or keep them in an untracked env file instead: copy `.env.example` to
+   `~/.config/cerebra/.env` (used by the MCP server and `cerebra-cli`) or to `./.env` in the
+   repo for development, fill in the values and run `chmod 600` on it. Real environment
+   variables win over the file. `.env` is git-ignored; never commit real values.
 3. Authorise read-only access (a browser window opens):
 
    ```bash

@@ -3,6 +3,8 @@
 from __future__ import annotations
 
 import os
+import sys
+from collections.abc import Iterator, MutableMapping
 from dataclasses import dataclass, field
 from pathlib import Path
 
@@ -121,3 +123,69 @@ class Config:
 def get_config() -> Config:
     """Return a Config instance built from environment variables."""
     return Config()
+
+
+# --- optional untracked env file (FR-5.2, NFR-SE-2) -----------------------------------------
+# Real environment variables always win. Values are never logged or printed.
+
+
+def _parse_env_line(line: str) -> tuple[str, str] | None:
+    s = line.strip()
+    if not s or s.startswith("#"):
+        return None
+    if s.startswith("export "):
+        s = s[7:].lstrip()
+    key, sep, val = s.partition("=")
+    key = key.strip()
+    if not sep or not key or key[0].isdigit() or not key.replace("_", "").isalnum():
+        return None
+    val = val.strip()
+    if len(val) >= 2 and val[0] == val[-1] and val[0] in "\"'":
+        return key, val[1:-1]
+    cut = val.find(" #")
+    if cut != -1:
+        val = val[:cut].rstrip()
+    return key, val
+
+
+def env_file_candidates(environ: MutableMapping[str, str] | None = None) -> Iterator[Path]:
+    """Where to look: $CEREBRA_ENV_FILE only, else ~/.config/cerebra/.env, then ./.env."""
+    env = os.environ if environ is None else environ
+    explicit = env.get("CEREBRA_ENV_FILE")
+    if explicit:
+        yield Path(explicit).expanduser()
+        return
+    xdg = env.get("XDG_CONFIG_HOME")
+    yield (Path(xdg) if xdg else Path.home() / ".config") / "cerebra" / ".env"
+    yield Path.cwd() / ".env"
+
+
+def load_env_file(
+    path: Path | None = None, environ: MutableMapping[str, str] | None = None
+) -> Path | None:
+    """Load KEY=VALUE pairs from the first env file found; return its path or None.
+
+    Only fills variables that are missing or empty, so the real environment wins. Warns on
+    stderr (stdout is the MCP channel) if the file is readable by group or others.
+    """
+    env = os.environ if environ is None else environ
+    for cand in [path] if path else env_file_candidates(env):
+        if not cand.is_file():
+            continue
+        try:
+            text = cand.read_text(encoding="utf-8")
+        except (OSError, UnicodeDecodeError):
+            print(  # noqa: T201 - stderr notice; stdout is the MCP channel
+                f"cerebra: cannot read env file {cand}", file=sys.stderr
+            )
+            return None
+        if os.name == "posix" and cand.stat().st_mode & 0o077:
+            print(  # noqa: T201 - stderr notice; stdout is the MCP channel
+                f"cerebra: {cand} is readable by others; run: chmod 600 {cand}", file=sys.stderr
+            )
+        for line in text.splitlines():
+            pair = _parse_env_line(line)
+            if pair and not env.get(pair[0]):
+                env[pair[0]] = pair[1]
+        return cand
+    return None

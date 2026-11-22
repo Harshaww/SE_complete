@@ -51,3 +51,8 @@ Thumbs.db
 
 # Lab archives (can be built on demand)
 *.zip
+
+# local secrets (FR-5.2, NFR-SE-2)
+.env
+.env.*
+!.env.example

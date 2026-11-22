@@ -15,7 +15,7 @@ from mcp.server.lowlevel.helper_types import ReadResourceContents
 from mcp.server.stdio import stdio_server
 from mcp.types import Resource, TextContent, Tool
 
-from cerebra.config import get_config
+from cerebra.config import get_config, load_env_file
 from cerebra.domain.errors import CerebraError
 from cerebra.infrastructure.composition import build_container
 from cerebra.mcp_tools.validation import (
@@ -390,6 +390,8 @@ def _warn_pending_recoveries(container: Any) -> None:
 
 
 def main() -> None:
+    load_env_file()  # optional untracked .env (FR-5.2); real env vars win
+
     async def _run() -> None:
         server = build_server()
         async with stdio_server() as (read_stream, write_stream):

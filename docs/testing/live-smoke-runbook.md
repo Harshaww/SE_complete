@@ -16,6 +16,9 @@ Purpose: prove the live adapter against the REAL YouTube API once, by hand. CI n
     export CEREBRA_QUOTA_BUDGET=500
     export CEREBRA_SEARCH_BUDGET=5
 
+Alternative: put the same values in a git-ignored `.env` (copy `.env.example`, `chmod 600`) and
+load it into this shell with `set -a; source .env; set +a`. pytest does not read `.env` itself.
+
 ## 2. Get a refresh token without touching the keychain
     export CEREBRA_USE_KEYRING=0
     export CEREBRA_TOKEN_FILE=/tmp/cerebra-live-token.json

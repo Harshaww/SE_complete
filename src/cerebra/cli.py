@@ -29,7 +29,7 @@ import unicodedata
 from collections.abc import Callable
 from typing import Any, TextIO
 
-from cerebra.config import get_config
+from cerebra.config import get_config, load_env_file
 from cerebra.domain.entities import ProposalState
 from cerebra.domain.errors import CerebraError
 from cerebra.infrastructure.auth.oauth_manager import SCOPE_READONLY, SCOPE_WRITE
@@ -50,6 +50,7 @@ def safe_terminal_text(text: str, limit: int = 120) -> str:
 
 
 def _default_container() -> Container:
+    load_env_file()  # optional untracked .env (FR-5.2); real env vars win
     cfg = get_config()
     return build_container(cfg, use_fixtures=cfg.use_fixtures)
 

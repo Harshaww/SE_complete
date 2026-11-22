@@ -22,8 +22,8 @@ jobs:
       CEREBRA_REFRESH_TOKEN: ${{ secrets.CEREBRA_REFRESH_TOKEN_READONLY }}
 
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - uses: actions/checkout@v6
+      - uses: actions/setup-python@v6
         with:
           python-version: "3.12"
       - run: pip install -e ".[dev]"
@@ -38,7 +38,7 @@ jobs:
         run: python scripts/redact_results.py live-results.xml
       - name: Upload redacted results
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: live-readonly-results
           path: live-results.xml
