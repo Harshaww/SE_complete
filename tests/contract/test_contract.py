@@ -5,8 +5,6 @@ Both must satisfy the same port contracts (LSP, NFR-MA-1, CON-6).
 
 from __future__ import annotations
 
-import asyncio
-
 import pytest
 
 from cerebra.adapters.fixtures.fixture_adapter import (
@@ -14,6 +12,7 @@ from cerebra.adapters.fixtures.fixture_adapter import (
     FixtureVideoReader,
 )
 from cerebra.domain.errors import CerebraError, ErrorCode
+from tests.support.helpers import run
 
 
 def _build_fixture_video_reader_with_data():
@@ -46,36 +45,34 @@ class VideoReaderContractTests:
         raise NotImplementedError
 
     def test_get_known_video_returns_metadata(self, reader):
-        video = asyncio.run(reader.get_video("dQw4w9WgXcQ"))
+        video = run(reader.get_video("dQw4w9WgXcQ"))
         assert video.video_id == "dQw4w9WgXcQ"
         assert video.title
         assert video.duration_seconds > 0
 
     def test_get_unknown_video_raises_not_found(self, reader):
         with pytest.raises(CerebraError) as exc:
-            asyncio.run(
+            run(
                 reader.get_video("XXXXXXXXXXX")  # 11 chars, doesn't exist
             )
         assert exc.value.code == ErrorCode.VIDEO_NOT_FOUND_OR_PRIVATE
 
     def test_get_videos_batch_returns_known(self, reader):
-        videos = asyncio.run(reader.get_videos(["dQw4w9WgXcQ"]))
+        videos = run(reader.get_videos(["dQw4w9WgXcQ"]))
         assert len(videos) == 1
 
     def test_get_videos_batch_omits_missing(self, reader):
-        videos = asyncio.run(
+        videos = run(
             reader.get_videos(["XXXXXXXXXXX"])  # doesn't exist
         )
         assert len(videos) == 0
 
     def test_search_returns_list(self, reader):
-        results = asyncio.run(reader.search_videos("test", max_results=5))
+        results = run(reader.search_videos("test", max_results=5))
         assert isinstance(results, list)
 
     def test_get_channel_uploads_returns_list(self, reader):
-        results = asyncio.run(
-            reader.get_channel_uploads("UCuAXFkgsw1L7xaCfnd5JJOw", max_results=10)
-        )
+        results = run(reader.get_channel_uploads("UCuAXFkgsw1L7xaCfnd5JJOw", max_results=10))
         assert isinstance(results, list)
 
 
@@ -96,14 +93,14 @@ class PlaylistWriterContractTests:
         raise NotImplementedError
 
     def test_create_playlist_returns_id(self, writer):
-        pid = asyncio.run(writer.create_playlist("Test Playlist", "Description", "private"))
+        pid = run(writer.create_playlist("Test Playlist", "Description", "private"))
         assert isinstance(pid, str)
         assert pid
 
     def test_add_playlist_item_no_error(self, writer):
-        pid = asyncio.run(writer.create_playlist("Test", "", "private"))
+        pid = run(writer.create_playlist("Test", "", "private"))
         # Should not raise
-        asyncio.run(writer.add_playlist_item(pid, "dQw4w9WgXcQ", 0))
+        run(writer.add_playlist_item(pid, "dQw4w9WgXcQ", 0))
 
 
 # mark: FR-5.17, CON-6, NFR-MA-1

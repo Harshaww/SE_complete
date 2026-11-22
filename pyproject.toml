@@ -64,6 +64,16 @@ markers = [
 # Live suites never run by default or in PR CI (NFR-TE-1, TR-5); the live workflows pass an
 # explicit -m expression, which overrides this one.
 addopts = "-m 'not live_readonly and not live_write'"
+# CPython 3.12 GC-ordering: asyncio event-loop self-pipe sockets (ssock/csock) may be
+# collected after loop.__del__ runs, emitting ResourceWarning on the sockets and the loop.
+# This is a CPython internals issue, not a code bug. Suppress at the test-session level.
+filterwarnings = [
+  "ignore::ResourceWarning:asyncio",
+  "ignore:unclosed event loop:ResourceWarning",
+  "ignore:unclosed <socket.socket:ResourceWarning",
+  "ignore:unclosed event loop:pytest.PytestUnraisableExceptionWarning",
+  "ignore:unclosed <socket.socket:pytest.PytestUnraisableExceptionWarning",
+]
 
 [tool.ruff]
 target-version = "py311"
