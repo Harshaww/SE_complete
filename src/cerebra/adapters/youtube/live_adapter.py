@@ -240,7 +240,7 @@ class LiveYouTubeAdapter:
         for batch in _chunks(ids, PAGE_SIZE):
             resp = await self._execute(
                 "videos.list",
-                lambda s, b=batch: s.videos().list(
+                lambda s, b=batch: s.videos().list(  # type: ignore[misc]
                     part="snippet,contentDetails", id=",".join(b), maxResults=PAGE_SIZE
                 ),
             )
@@ -269,7 +269,7 @@ class LiveYouTubeAdapter:
                 kwargs["relevanceLanguage"] = language.split("-")[0].lower()
             if token:
                 kwargs["pageToken"] = token
-            resp = await self._execute("search.list", lambda s, kw=kwargs: s.search().list(**kw))
+            resp = await self._execute("search.list", lambda s, kw=kwargs: s.search().list(**kw))  # type: ignore[misc]
             ids.extend(
                 i["id"]["videoId"]
                 for i in resp.get("items", [])
@@ -368,7 +368,7 @@ class LiveYouTubeAdapter:
         for batch in _chunks(ids, PAGE_SIZE):
             resp = await self._execute(
                 "channels.list",
-                lambda s, b=batch: s.channels().list(
+                lambda s, b=batch: s.channels().list(  # type: ignore[misc]
                     part="snippet,statistics,topicDetails,brandingSettings",
                     id=",".join(b),
                     maxResults=PAGE_SIZE,
@@ -410,7 +410,9 @@ class LiveYouTubeAdapter:
             if token:
                 kwargs["pageToken"] = token
             resp = await self._execute(
-                "videos.list", lambda s, kw=kwargs: s.videos().list(**kw), need_user=True
+                "videos.list",
+                lambda s, kw=kwargs: s.videos().list(**kw),  # type: ignore[misc]
+                need_user=True,
             )
             out.extend(video_from_resource(i) for i in resp.get("items", []))
             token = resp.get("nextPageToken")
@@ -431,7 +433,7 @@ class LiveYouTubeAdapter:
                 kwargs["pageToken"] = token
             resp = await self._execute(
                 "subscriptions.list",
-                lambda s, kw=kwargs: s.subscriptions().list(**kw),
+                lambda s, kw=kwargs: s.subscriptions().list(**kw),  # type: ignore[misc]
                 need_user=True,
             )
             for it in resp.get("items", []):
@@ -462,7 +464,9 @@ class LiveYouTubeAdapter:
             if token:
                 kwargs["pageToken"] = token
             resp = await self._execute(
-                "playlists.list", lambda s, kw=kwargs: s.playlists().list(**kw), need_user=True
+                "playlists.list",
+                lambda s, kw=kwargs: s.playlists().list(**kw),  # type: ignore[misc]
+                need_user=True,
             )
             for it in resp.get("items", []):
                 sn = it.get("snippet", {})
@@ -589,7 +593,7 @@ class LiveYouTubeAdapter:
                 kwargs["pageToken"] = token
             resp = await self._execute(
                 "playlistItems.list",
-                lambda s, kw=kwargs: s.playlistItems().list(**kw),
+                lambda s, kw=kwargs: s.playlistItems().list(**kw),  # type: ignore[misc]
                 need_user=need_user,
             )
             for it in resp.get("items", []):

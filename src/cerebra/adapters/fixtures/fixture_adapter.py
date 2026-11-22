@@ -8,6 +8,7 @@ from __future__ import annotations
 
 import json
 from pathlib import Path
+from typing import cast
 
 from cerebra.domain.entities import ChannelMetadata, VideoMetadata
 from cerebra.domain.errors import channel_not_found, video_not_found
@@ -226,7 +227,7 @@ def _dict_to_video(d: dict[str, object]) -> VideoMetadata:
         description=str(d.get("description", "")),
         channel_id=str(d.get("channel_id", "")),
         channel_title=str(d.get("channel_title", "")),
-        duration_seconds=int(d.get("duration_seconds", 0)),
+        duration_seconds=int(cast(int, d.get("duration_seconds", 0))),
         category_id=str(d.get("category_id", "")),
         language=str(d.get("language", "")),
         tags=list(tags) if isinstance(tags, list) else [],
@@ -241,10 +242,10 @@ def _dict_to_channel(d: dict[str, object]) -> ChannelMetadata:
         channel_id=str(d.get("channel_id", d.get("id", ""))),
         title=str(d.get("title", "")),
         description=str(d.get("description", "")),
-        keywords=list(d.get("keywords", [])),
-        topic_categories=list(d.get("topic_categories", [])),
+        keywords=cast(list[str], d.get("keywords", [])),
+        topic_categories=cast(list[str], d.get("topic_categories", [])),
         language=str(d.get("language", "")),
         subscriber_count=d.get("subscriber_count"),  # type: ignore[arg-type]
-        upload_cadence_per_month=float(d.get("upload_cadence_per_month", 0.0)),
-        recent_upload_titles=list(d.get("recent_upload_titles", [])),
+        upload_cadence_per_month=float(cast(float, d.get("upload_cadence_per_month", 0.0))),
+        recent_upload_titles=cast(list[str], d.get("recent_upload_titles", [])),
     )

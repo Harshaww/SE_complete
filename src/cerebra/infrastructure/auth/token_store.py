@@ -17,6 +17,7 @@ import stat
 import sys
 import tempfile
 from pathlib import Path
+from typing import Any
 
 from cerebra.ports.interfaces import TokenStore
 
@@ -109,8 +110,8 @@ class KeyringTokenStore:
         keyring_module: object | None = None,
     ) -> None:
         if keyring_module is None:
-            import keyring as keyring_module  # type: ignore[no-redef]
-        self._kr = keyring_module
+            import keyring as keyring_module
+        self._kr: Any = keyring_module
         self._service = service
         self._username = username
 
@@ -119,10 +120,10 @@ class KeyringTokenStore:
         return "keyring"
 
     def save_token(self, token_data: dict[str, object]) -> None:
-        self._kr.set_password(self._service, self._username, json.dumps(token_data))  # type: ignore[attr-defined]
+        self._kr.set_password(self._service, self._username, json.dumps(token_data))
 
     def load_token(self) -> dict[str, object] | None:
-        raw = self._kr.get_password(self._service, self._username)  # type: ignore[attr-defined]
+        raw = self._kr.get_password(self._service, self._username)
         if not raw:
             return None
         try:
@@ -133,7 +134,7 @@ class KeyringTokenStore:
 
     def delete_token(self) -> None:
         try:
-            self._kr.delete_password(self._service, self._username)  # type: ignore[attr-defined]
+            self._kr.delete_password(self._service, self._username)
         except Exception:
             return
 

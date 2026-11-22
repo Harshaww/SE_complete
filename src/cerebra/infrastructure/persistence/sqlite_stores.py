@@ -12,7 +12,7 @@ import sqlite3
 import threading
 import time
 from pathlib import Path
-from typing import Any
+from typing import Any, cast
 
 from cerebra.domain.entities import (
     PlaylistItem,
@@ -191,28 +191,28 @@ class SQLiteProposalStore:
                 video_id=str(i["video_id"]),
                 title=str(i["title"]),
                 channel_title=str(i["channel_title"]),
-                duration_seconds=int(i["duration_seconds"]),
+                duration_seconds=int(cast(int, i["duration_seconds"])),
             )
-            for i in d.get("items", [])  # type: ignore[union-attr]
+            for i in cast(list[dict[str, object]], d.get("items", []))
         ]
         return PlaylistProposal(
             proposal_id=str(d["proposal_id"]),
             topic=str(d["topic"]),
-            total_duration_seconds=int(d["total_duration_seconds"]),
-            max_video_duration_seconds=d.get("max_video_duration_seconds"),  # type: ignore[arg-type]
-            language=d.get("language"),  # type: ignore[arg-type]
+            total_duration_seconds=int(cast(int, d.get("total_duration_seconds", 0))),
+            max_video_duration_seconds=cast("int | None", d.get("max_video_duration_seconds")),
+            language=cast("str | None", d.get("language")),
             items=items,
             created_at=str(d["created_at"]),
             expires_at=str(d["expires_at"]),
             state=ProposalState(d["state"]),
             digest=str(d["digest"]),
             privacy_status=PrivacyStatus(d.get("privacy_status", "private")),
-            quota_reservation_general=int(d.get("quota_reservation_general", 0)),
-            quota_reservation_write=int(d.get("quota_reservation_write", 0)),
-            playlist_id=d.get("playlist_id"),  # type: ignore[arg-type]
-            playlist_url=d.get("playlist_url"),  # type: ignore[arg-type]
-            failed_item_ids=list(d.get("failed_item_ids", [])),  # type: ignore[arg-type]
-            item_states=dict(d.get("item_states", {})),  # type: ignore[arg-type]
+            quota_reservation_general=int(cast(int, d.get("quota_reservation_general", 0))),
+            quota_reservation_write=int(cast(int, d.get("quota_reservation_write", 0))),
+            playlist_id=cast("str | None", d.get("playlist_id")),
+            playlist_url=cast("str | None", d.get("playlist_url")),
+            failed_item_ids=cast(list[str], d.get("failed_item_ids", [])),
+            item_states=cast(dict[str, str], d.get("item_states", {})),
             ambiguous=bool(d.get("ambiguous", False)),
             account_id=str(d.get("account_id", "")),
         )
@@ -236,7 +236,7 @@ class SQLiteCacheStore:
         )
         if not rows:
             return None
-        return pickle.loads(rows[0]["value_blob"])  # noqa: S301
+        return cast(object, pickle.loads(rows[0]["value_blob"]))  # noqa: S301
 
     def set(self, key: str, value: object, ttl_seconds: int) -> None:
         blob = pickle.dumps(value)
@@ -356,4 +356,4 @@ class SQLiteQuotaStore:
         rows = self._db.execute("SELECT state FROM quota_state WHERE id = 1")
         if not rows:
             return {}
-        return json.loads(rows[0]["state"])
+        return cast(dict[str, object], json.loads(rows[0]["state"]))

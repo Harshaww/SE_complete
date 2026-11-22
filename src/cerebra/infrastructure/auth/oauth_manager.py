@@ -17,7 +17,7 @@ import json
 import re
 import sys
 from collections.abc import Callable
-from typing import Any, TextIO
+from typing import Any, TextIO, cast
 
 from cerebra.domain.errors import (
     CerebraError,
@@ -121,7 +121,7 @@ class OAuthManager:
         data = self._load_record()
         if not data:
             return set()
-        return {str(s) for s in data.get("scopes", [])}  # type: ignore[union-attr]
+        return {str(s) for s in cast(list[object], data.get("scopes", []))}
 
     def has_scope(self, scope: str) -> bool:
         return scope_satisfies(self.granted_scopes(), scope)
@@ -331,7 +331,7 @@ class OAuthManager:
 def _credentials_from_info(info: dict[str, Any]) -> Any:
     from google.oauth2.credentials import Credentials
 
-    return Credentials.from_authorized_user_info(info)
+    return Credentials.from_authorized_user_info(info)  # type: ignore[no-untyped-call]
 
 
 def _default_refresh(creds: Any) -> None:

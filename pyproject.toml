@@ -99,12 +99,16 @@ ignore = [
 [tool.mypy]
 python_version = "3.12"
 strict = true
-files = ["src/cerebra/domain", "src/cerebra/application"]
+files = ["src/cerebra"]
 mypy_path = "src"
 explicit_package_bases = true
 
 [[tool.mypy.overrides]]
 module = ["sklearn.*"]
+ignore_missing_imports = true
+
+[[tool.mypy.overrides]]
+module = ["googleapiclient.*", "google_auth_oauthlib.*", "google.auth.*", "google.oauth2.*"]
 ignore_missing_imports = true
 
 [tool.coverage.run]
