@@ -1,10 +1,10 @@
 ---
 title: Writing playlists: playlists.insert and playlistItems.insert
 type: research-note
-status: draft
+status: reviewed
 source: https://developers.google.com/youtube/v3/docs/playlists/insert; https://developers.google.com/youtube/v3/docs/playlistItems/insert
 accessed: 2026-11-22
-author: unassigned
+author: SegmentationFault
 drafted-with: ai, see [[ai-session-2026-11-22-brain-drafts]]
 requirements: [FR-4.5, FR-4.9, FR-4.12, FR-4.13, NFR-SA-1, NFR-SA-2]
 ---

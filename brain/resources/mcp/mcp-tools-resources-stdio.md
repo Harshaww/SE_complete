@@ -1,10 +1,10 @@
 ---
 title: MCP tools, resources and the stdio transport
 type: research-note
-status: draft
+status: reviewed
 source: https://modelcontextprotocol.io; https://github.com/modelcontextprotocol/python-sdk
 accessed: 2026-11-22
-author: unassigned
+author: SegmentationFault
 drafted-with: ai, see [[ai-session-2026-11-22-brain-drafts]]
 requirements: [FR-5.12, FR-5.13, FR-5.16, CON-8, SE-7]
 ---

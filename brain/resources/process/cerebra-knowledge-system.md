@@ -1,10 +1,10 @@
 ---
 title: The Cerebra second brain: PARA vault and brain skills
 type: research-note
-status: draft
+status: reviewed
 source: https://obsidian.md; SRS section 4.7; PARA organisation method
 accessed: 2026-11-22
-author: unassigned
+author: SegmentationFault
 drafted-with: ai, see [[ai-session-2026-11-22-brain-drafts]]
 requirements: [SK-3.1, SK-4.1, SK-5.1, PR-9, PR-10, BR-6]
 ---
