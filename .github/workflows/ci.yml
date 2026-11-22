@@ -63,7 +63,9 @@ jobs:
             --cov-fail-under=80
 
       - name: Secret scan (gitleaks)
-        uses: gitleaks/gitleaks-action@v3
+        run: |
+          curl -sSfL https://github.com/gitleaks/gitleaks/releases/download/v8.21.2/gitleaks_8.21.2_linux_x64.tar.gz | tar -xz gitleaks
+          ./gitleaks git --log-opts="origin/main..HEAD" -v
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
