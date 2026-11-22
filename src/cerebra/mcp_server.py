@@ -8,12 +8,13 @@ from __future__ import annotations
 
 import asyncio
 import sys
-from typing import Any
+from typing import Any, cast
 
 from mcp.server import Server
 from mcp.server.lowlevel.helper_types import ReadResourceContents
 from mcp.server.stdio import stdio_server
 from mcp.types import Resource, TextContent, Tool
+from pydantic import AnyUrl
 
 from cerebra.config import get_config, load_env_file
 from cerebra.domain.errors import CerebraError
@@ -40,7 +41,7 @@ def build_server() -> Server:
 
     # ── Tool registration (FR-5.12) ──────────────────────────────────────────
 
-    @app.list_tools()
+    @app.list_tools()  # type: ignore[no-untyped-call, untyped-decorator]
     async def list_tools() -> list[Tool]:
         return [
             Tool(
@@ -212,7 +213,7 @@ def build_server() -> Server:
             ),
         ]
 
-    @app.call_tool()
+    @app.call_tool()  # type: ignore[untyped-decorator]
     async def call_tool(name: str, arguments: dict[str, Any]) -> list[TextContent]:
         try:
             result = await _dispatch(name, arguments, container)
@@ -238,24 +239,24 @@ def build_server() -> Server:
 
     # ── Resources (FR-5.13) ──────────────────────────────────────────────────
 
-    @app.list_resources()
+    @app.list_resources()  # type: ignore[no-untyped-call, untyped-decorator]
     async def list_resources() -> list[Resource]:
         return [
             Resource(
-                uri="cerebra://quota_status",
+                uri=AnyUrl("cerebra://quota_status"),
                 name="quota_status",
                 description="Current YouTube API quota usage for all pools",
                 mimeType="application/json",
             ),
             Resource(
-                uri="cerebra://auth_status",
+                uri=AnyUrl("cerebra://auth_status"),
                 name="auth_status",
                 description="Current OAuth authorisation status",
                 mimeType="application/json",
             ),
         ]
 
-    @app.read_resource()
+    @app.read_resource()  # type: ignore[no-untyped-call, untyped-decorator]
     async def read_resource(uri: str) -> list[ReadResourceContents]:
         import json
 
@@ -271,6 +272,7 @@ def build_server() -> Server:
         if str(uri) == "cerebra://auth_status":
             out: dict[str, Any] = {"authenticated": bool(container.is_authenticated)}
             if getattr(container, "oauth", None) is not None:
+                assert container.oauth is not None
                 out.update(container.oauth.status())  # scopes/expiry hints; never tokens
             return _json(out)
         return _json({"error": "unknown resource"})
@@ -326,8 +328,11 @@ async def _dispatch(name: str, args: dict[str, Any], container: Any) -> dict[str
             max_dur = validate_duration_seconds(
                 args["max_duration_seconds"], "max_duration_seconds"
             )
-        return await container.recommend.recommend(
-            limit=limit, topic_filter=args.get("topic_filter"), max_duration_seconds=max_dur
+        return cast(
+            dict[str, Any],
+            await container.recommend.recommend(
+                limit=limit, topic_filter=args.get("topic_filter"), max_duration_seconds=max_dur
+            ),
         )
 
     elif name == "analyse_engagement":
@@ -337,7 +342,10 @@ async def _dispatch(name: str, args: dict[str, Any], container: Any) -> dict[str
             period_a = (str(args["period_a_start"]), str(args["period_a_end"]))
         if args.get("period_b_start") and args.get("period_b_end"):
             period_b = (str(args["period_b_start"]), str(args["period_b_end"]))
-        return await container.analyse.analyse(top_k=top_k, period_a=period_a, period_b=period_b)
+        return cast(
+            dict[str, Any],
+            await container.analyse.analyse(top_k=top_k, period_a=period_a, period_b=period_b),
+        )
 
     elif name == "propose_playlist":
         topic = validate_topic(args.get("topic"))
@@ -350,13 +358,19 @@ async def _dispatch(name: str, args: dict[str, Any], container: Any) -> dict[str
                 args["max_video_duration_seconds"], "max_video_duration_seconds"
             )
         lang = validate_language(args.get("language"))
-        return await container.propose.propose(topic, total, max_vid, lang)
+        return cast(
+            dict[str, Any],
+            await container.propose.propose(topic, total, max_vid, lang),
+        )
 
     elif name == "create_playlist":
         pid = validate_proposal_id(args.get("proposal_id"))
         digest = validate_digest(args.get("confirmation_digest"))
         ps = validate_privacy_status(args.get("privacy_status"))
-        return await container.create_pl.create(pid, digest, ps)
+        return cast(
+            dict[str, Any],
+            await container.create_pl.create(pid, digest, ps),
+        )
 
     else:
         from cerebra.domain.errors import CerebraError, ErrorCode

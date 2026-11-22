@@ -34,7 +34,7 @@ def validate_reference(ref: Any) -> str:
     # Reject path-traversal patterns (NFR-SE-4)
     if _PATH_TRAVERSAL_RE.search(ref):
         raise invalid_argument("reference", "contains disallowed path characters")
-    return ref
+    return str(ref)
 
 
 def validate_limit(limit: Any, default: int = 10, max_val: int = 50) -> int:
@@ -55,7 +55,7 @@ def validate_topic(topic: Any) -> str:
         raise invalid_argument("topic", "must not be empty")
     if len(topic) > MAX_TOPIC_LEN:
         raise invalid_argument("topic", f"too long (max {MAX_TOPIC_LEN} chars)")
-    return topic
+    return str(topic)
 
 
 def validate_duration_seconds(val: Any, param: str) -> int:
@@ -78,7 +78,7 @@ def validate_language(lang: Any) -> str | None:
         return None
     if not _LANGUAGE_STRICT.match(lang):
         raise invalid_argument("language", "must be a BCP-47 language code like 'en' or 'en-US'")
-    return lang
+    return str(lang)
 
 
 def validate_proposal_id(pid: Any) -> str:
@@ -87,7 +87,7 @@ def validate_proposal_id(pid: Any) -> str:
     pid = pid.strip()
     if not _PROPOSAL_ID_STRICT.match(pid):
         raise invalid_argument("proposal_id", "must be a valid UUID v4")
-    return pid
+    return str(pid)
 
 
 def validate_digest(digest: Any) -> str:
@@ -96,7 +96,7 @@ def validate_digest(digest: Any) -> str:
     digest = digest.strip().lower()
     if not _DIGEST_STRICT.match(digest):
         raise invalid_argument("digest", "must be a 64-character hex SHA-256 digest")
-    return digest
+    return str(digest)
 
 
 def validate_privacy_status(ps: Any) -> str:
@@ -107,7 +107,7 @@ def validate_privacy_status(ps: Any) -> str:
     ps = ps.strip().lower()
     if ps not in ("private", "public", "unlisted"):
         raise invalid_argument("privacy_status", "must be 'private', 'public' or 'unlisted'")
-    return ps
+    return str(ps)
 
 
 def validate_top_k(k: Any) -> int:
