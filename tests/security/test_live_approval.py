@@ -204,9 +204,9 @@ class TestApproveCli:
         assert code == 1 and "INVALID_ARGUMENT" in err.getvalue()
 
     def test_terminal_escape_sequences_in_titles_are_neutralised(self, env):
-        evil = "\x1b[2J\x1b]0;pwned\x07Nice video‮"
+        evil = "\x1b[2J\x1b]0;pwned\x07Nice video\u202e"
         assert "\x1b" not in safe_terminal_text(evil) and "\x07" not in safe_terminal_text(evil)
-        assert "‮" not in safe_terminal_text(evil)
+        assert "\u202e" not in safe_terminal_text(evil)
         assert len(safe_terminal_text("x" * 500)) == 120
         prop = env.propose()
         p = env.container.proposal_store.load(prop["proposal_id"])
