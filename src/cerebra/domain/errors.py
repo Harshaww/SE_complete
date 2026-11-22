@@ -40,7 +40,10 @@ class ErrorCode(str, Enum):
     APPROVAL_REJECTED = "APPROVAL_REJECTED"
 
 
-@dataclass(frozen=True)
+# Not frozen: Python code (contextlib, pytest, asyncio helpers) assigns __traceback__ on
+# exceptions, and a frozen dataclass turns that into FrozenInstanceError, which hides the real
+# error (found by the first live API run). eq=False keeps normal exception identity semantics.
+@dataclass(eq=False)
 class CerebraError(Exception):
     """Uniform structured error (FR-5.15)."""
 

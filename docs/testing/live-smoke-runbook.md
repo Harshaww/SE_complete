@@ -24,7 +24,7 @@ load it into this shell with `set -a; source .env; set +a`. pytest does not read
     export CEREBRA_TOKEN_FILE=/tmp/cerebra-live-token.json
     cerebra-cli login            # browser opens; sign in with the THROWAWAY account
     cerebra-cli status           # expect authenticated: true
-    export CEREBRA_REFRESH_TOKEN="$(python -c "import json;print(json.load(open('/tmp/cerebra-live-token.json'))['refresh_token'])")"
+    export CEREBRA_REFRESH_TOKEN="$(python -c "import json;print(json.load(open('/tmp/cerebra-live-token.json'))['credentials']['refresh_token'])")"
     rm -f /tmp/cerebra-live-token.json
     unset CEREBRA_USE_KEYRING CEREBRA_TOKEN_FILE
 
