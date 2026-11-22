@@ -56,9 +56,9 @@ If a call errors (auth, budget), the message names the cause; fix env and rerun.
 
 | Date | Check | Measured | Quota used | Result |
 |------|-------|----------|------------|--------|
-|      | read-only suite | | | |
-|      | FR-1 uncached | | | |
-|      | FR-4 proposal | | | |
+| 2026-11-22 | read-only suite | 4.25 s total | ~105 general | 7 passed |
+| 2026-11-22 | FR-1 uncached | 1.82 s | 105 general, 1 search | PASS (NFR-PF-3 < 10 s) |
+| 2026-11-22 | FR-4 proposal | N/A | 1 general | BLOCKED: throwaway account has no YouTube channel. Re-run with channel-enabled account. |
 
 ## 6. Redact before sharing anything
     python scripts/redact_results.py live-results.xml write-results.xml
