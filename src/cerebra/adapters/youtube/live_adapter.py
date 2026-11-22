@@ -201,6 +201,8 @@ class LiveYouTubeAdapter:
                 return insufficient_scope(scope), False
             if status in (400, 403) and reason == "youtubeSignupRequired":
                 return no_youtube_channel(), False
+            if status == 404 and reason == "channelNotFound":
+                return no_youtube_channel(), False
             if status == 429 or (status == 403 and reason in _RATE_REASONS) or status >= 500:
                 return transient_error(f"HTTP {status} {reason}".strip()), True
             return youtube_api_error(status, reason), True

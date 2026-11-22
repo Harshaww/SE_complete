@@ -120,6 +120,13 @@ class TestErrorMapping:
         adapter, _, _, _ = make_live(fake)
         assert code_of(adapter.create_playlist("t", "d", "private")) == ErrorCode.NO_YOUTUBE_CHANNEL
 
+    def test_404_channel_not_found_maps_to_no_channel(self):
+        # 404 channelNotFound on playlists.list (mine=True) means no YouTube channel (FR-3.8, NFR-RE-1)
+        fake = fixture_backed_fake()
+        fake.errors["playlists.list"] = [http_error(404, "channelNotFound")]
+        adapter, _, _, _ = make_live(fake)
+        assert code_of(adapter.get_playlists()) == ErrorCode.NO_YOUTUBE_CHANNEL
+
     def test_unsupported_method_refused(self):
         adapter, _, _, _ = make_live(fixture_backed_fake())
         with pytest.raises(CerebraError):

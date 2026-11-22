@@ -226,6 +226,46 @@ class TestAnalyseCoverage:
         )
         assert "top_channels" in result
 
+    def test_analyse_no_youtube_channel_falls_back_to_empty_playlists(self, tmp_path):
+        """FR-3.8, NFR-RE-1: get_playlists raising NO_YOUTUBE_CHANNEL must not propagate; analyse
+        proceeds with empty playlist list and still returns the not_watch_history_statement."""
+        import asyncio
+
+        # Stub library: liked videos work, get_playlists raises NO_YOUTUBE_CHANNEL
+        from cerebra.adapters.fixtures.fixture_adapter import FixtureUserLibraryReader
+        from cerebra.application.analyse import AnalyseEngagementUseCase
+        from cerebra.config import Config
+        from cerebra.domain.errors import CerebraError, ErrorCode
+        from cerebra.domain.quota import QuotaLedger
+        from cerebra.infrastructure.persistence.sqlite_stores import SQLiteCacheStore, SQLiteDB
+
+        class _NoChannelLibrary(FixtureUserLibraryReader):
+            async def get_playlists(self, max_results: int = 200):
+                raise CerebraError(ErrorCode.NO_YOUTUBE_CHANNEL, "no channel")
+
+        cfg = Config()
+        cfg.data_dir = tmp_path / "cerebra"
+        cfg.data_dir.mkdir(parents=True, exist_ok=True)
+        cfg.daily_quota_budget = 10000
+        cfg.search_quota_budget = 100
+        cfg.cache_ttl_seconds = 300
+
+        db = SQLiteDB(cfg.db_path)
+        cache = SQLiteCacheStore(db)
+        quota = QuotaLedger(10000, 100)
+
+        uc = AnalyseEngagementUseCase(
+            user_library=_NoChannelLibrary(),
+            quota=quota,
+            cache=cache,
+            config=cfg,
+            is_authenticated=True,
+        )
+        result = asyncio.run(uc.analyse(top_k=3))
+        assert "error" not in result
+        assert "watch history" in str(result["not_watch_history_statement"]).lower()
+        assert result["top_channels"] == [] or isinstance(result["top_channels"], list)
+
 
 # ── RecommendVideosUseCase coverage ──────────────────────────────────────────
 
