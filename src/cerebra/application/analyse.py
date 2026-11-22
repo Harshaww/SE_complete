@@ -7,7 +7,7 @@ from collections import Counter, defaultdict
 
 from cerebra.config import Config
 from cerebra.domain.entities import DurationBand, VideoMetadata
-from cerebra.domain.errors import auth_required
+from cerebra.domain.errors import CerebraError, ErrorCode, auth_required
 from cerebra.domain.quota import QuotaLedger
 from cerebra.ports.interfaces import CacheStore, UserLibraryReader
 
@@ -61,9 +61,16 @@ class AnalyseEngagementUseCase:
         liked = await self._library.get_liked_videos(max_results=1000)
         self._quota.consume("videos.list", max(1, len(liked) // 50 + 1))
 
-        playlists = await self._library.get_playlists()
-        self._quota.consume("playlists.list", 1)
-
+        # FR-3.8: account may have no YouTube channel (channelNotFound / NO_YOUTUBE_CHANNEL);
+        # treat as empty playlists rather than surfacing an internal API error.
+        try:
+            playlists = await self._library.get_playlists()
+            self._quota.consume("playlists.list", 1)
+        except CerebraError as _exc:
+            if _exc.code == ErrorCode.NO_YOUTUBE_CHANNEL:
+                playlists = []
+            else:
+                raise
         playlist_videos: list[VideoMetadata] = []
         playlist_add_dates: dict[str, str] = {}  # video_id -> add date
         for pl in playlists:
