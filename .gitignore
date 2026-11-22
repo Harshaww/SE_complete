@@ -56,3 +56,6 @@ Thumbs.db
 .env
 .env.*
 !.env.example
+
+live-results.xml
+write-results.xml
