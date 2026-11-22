@@ -27,9 +27,7 @@ class TestMCPFindSimilarVideos:
         cfg = _make_config(tmp_path)
         container = build_container(cfg)
         # With empty fixture store: should return empty list (no candidates)
-        result = asyncio.get_event_loop().run_until_complete(
-            container.find_similar.find_similar_videos("dQw4w9WgXcQ", limit=10)
-        )
+        result = asyncio.run(container.find_similar.find_similar_videos("dQw4w9WgXcQ", limit=10))
         assert isinstance(result, list)
 
     def test_invalid_reference_returns_structured_error(self, tmp_path):
@@ -38,9 +36,7 @@ class TestMCPFindSimilarVideos:
         cfg = _make_config(tmp_path)
         container = build_container(cfg)
         with pytest.raises(CerebraError) as exc:
-            asyncio.get_event_loop().run_until_complete(
-                container.find_similar.find_similar_videos("not-a-valid-ref!", limit=10)
-            )
+            asyncio.run(container.find_similar.find_similar_videos("not-a-valid-ref!", limit=10))
         assert exc.value.code == ErrorCode.INVALID_VIDEO_ID
 
     def test_over_budget_rejected_before_api_call(self, tmp_path):
@@ -51,9 +47,7 @@ class TestMCPFindSimilarVideos:
         cfg.daily_quota_budget = 0  # no budget at all
         container = build_container(cfg)
         with pytest.raises(CerebraError) as exc:
-            asyncio.get_event_loop().run_until_complete(
-                container.find_similar.find_similar_videos("dQw4w9WgXcQ", limit=10)
-            )
+            asyncio.run(container.find_similar.find_similar_videos("dQw4w9WgXcQ", limit=10))
         assert exc.value.code == ErrorCode.QUOTA_BUDGET_EXCEEDED
 
 
@@ -85,7 +79,7 @@ class TestMCPRecommend:
             is_authenticated=False,  # <-- not authenticated
         )
         with pytest.raises(CerebraError) as exc:
-            asyncio.get_event_loop().run_until_complete(uc.recommend())
+            asyncio.run(uc.recommend())
         assert exc.value.code == ErrorCode.AUTH_REQUIRED
 
     def test_empty_profile_returns_explanatory_empty(self, tmp_path):
@@ -111,7 +105,7 @@ class TestMCPRecommend:
             config=cfg,
             is_authenticated=True,
         )
-        result = asyncio.get_event_loop().run_until_complete(uc.recommend())
+        result = asyncio.run(uc.recommend())
         assert "recommendations" in result
         assert result["recommendations"] == []
         assert "note" in result  # explanatory message
@@ -142,7 +136,7 @@ class TestMCPAnalyse:
             is_authenticated=False,
         )
         with pytest.raises(CerebraError) as exc:
-            asyncio.get_event_loop().run_until_complete(uc.analyse())
+            asyncio.run(uc.analyse())
         assert exc.value.code == ErrorCode.AUTH_REQUIRED
 
     def test_analyse_empty_data_returns_empty_sections(self, tmp_path):
@@ -167,7 +161,7 @@ class TestMCPAnalyse:
             config=cfg,
             is_authenticated=True,
         )
-        result = asyncio.get_event_loop().run_until_complete(uc.analyse())
+        result = asyncio.run(uc.analyse())
         assert result["top_channels"] == []
         assert result["top_categories"] == []
         assert "watch history" in result["not_watch_history_statement"].lower()
@@ -207,9 +201,7 @@ class TestMCPProposePlaylst:
             is_authenticated=True,
         )
         with pytest.raises(CerebraError) as exc:
-            asyncio.get_event_loop().run_until_complete(
-                uc.propose(topic=None, total_duration_seconds=3600)
-            )
+            asyncio.run(uc.propose(topic=None, total_duration_seconds=3600))
         assert exc.value.code == ErrorCode.MISSING_CONSTRAINT
 
     def test_propose_missing_duration_returns_missing_constraint(self, tmp_path):
@@ -240,9 +232,7 @@ class TestMCPProposePlaylst:
             is_authenticated=True,
         )
         with pytest.raises(CerebraError) as exc:
-            asyncio.get_event_loop().run_until_complete(
-                uc.propose(topic="Python", total_duration_seconds=None)
-            )
+            asyncio.run(uc.propose(topic="Python", total_duration_seconds=None))
         assert exc.value.code == ErrorCode.MISSING_CONSTRAINT
 
 

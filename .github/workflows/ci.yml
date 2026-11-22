@@ -24,8 +24,8 @@ jobs:
           python-version: "3.12"
           cache: pip
 
-      - name: Install dependencies
-        run: pip install -e ".[dev]"
+      - name: Install dependencies (pinned, NFR-SE-6)
+        run: pip install -r requirements.lock && pip install -e . --no-deps
 
       - name: Lint (ruff)
         run: ruff check .
@@ -85,5 +85,5 @@ jobs:
         with:
           python-version: "3.12"
       - run: python -m pip install --upgrade pip
-      - run: pip install -e ".[dev]"
-      - run: pip-audit
+      - run: pip install -r requirements.lock
+      - run: pip-audit -r requirements.lock --no-deps

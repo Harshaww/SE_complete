@@ -98,16 +98,14 @@ class TestApprovalProvenance:
         )
 
         # First use — should succeed
-        result = asyncio.get_event_loop().run_until_complete(
-            create_uc.create(pid, digest, "private")
-        )
+        result = asyncio.run(create_uc.create(pid, digest, "private"))
         assert result["status"] in ("CREATED", "PARTIAL")
 
         # Second use — must be rejected
         from cerebra.domain.errors import CerebraError
 
         with pytest.raises(CerebraError) as exc:
-            asyncio.get_event_loop().run_until_complete(create_uc.create(pid, digest, "private"))
+            asyncio.run(create_uc.create(pid, digest, "private"))
         assert exc.value.code in (
             ErrorCode.PROPOSAL_ALREADY_USED,
             ErrorCode.PROPOSAL_INVALID_STATE,
@@ -156,7 +154,7 @@ class TestApprovalProvenance:
         )
 
         with pytest.raises(CerebraError) as exc:
-            asyncio.get_event_loop().run_until_complete(create_uc.create(pid, digest, "private"))
+            asyncio.run(create_uc.create(pid, digest, "private"))
         assert exc.value.code == ErrorCode.PROPOSAL_EXPIRED
 
     def test_no_write_without_proposal(self, proposal_store, clock, audit_log, config):
@@ -178,9 +176,7 @@ class TestApprovalProvenance:
         )
 
         with pytest.raises(CerebraError) as exc:
-            asyncio.get_event_loop().run_until_complete(
-                create_uc.create(str(uuid.uuid4()), "a" * 64, "private")
-            )
+            asyncio.run(create_uc.create(str(uuid.uuid4()), "a" * 64, "private"))
         assert exc.value.code == ErrorCode.PROPOSAL_NOT_FOUND
 
 

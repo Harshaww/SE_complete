@@ -69,6 +69,7 @@ class TestResources:
         quota = read("cerebra://quota_status")
         assert "general" in quota
         assert "authenticated" in read("cerebra://auth_status")
+        assert read("cerebra://no-such-resource") == {"error": "unknown resource"}
 
 
 # mark: FR-5.10, NFR-RE-1

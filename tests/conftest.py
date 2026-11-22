@@ -151,10 +151,15 @@ def _ensure_event_loop():
     import asyncio
     import warnings
 
+    created = None
     with warnings.catch_warnings():
         warnings.simplefilter("ignore", DeprecationWarning)
         try:
             asyncio.get_event_loop_policy().get_event_loop()
         except RuntimeError:
-            asyncio.set_event_loop(asyncio.new_event_loop())
+            created = asyncio.new_event_loop()
+            asyncio.set_event_loop(created)
     yield
+    if created is not None:
+        created.close()
+        asyncio.set_event_loop(None)

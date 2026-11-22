@@ -6,7 +6,7 @@
 ## Project
 
 **Cerebra** is a locally run Python MCP server (YouTube Video Intelligence).
-Repository: `c:\Users\sai harsha\Desktop\SE`
+Repository: github.com/Harshaww/SE_complete
 SRS v1.0 – 09-Nov-2026 | Team: SegmentationFault
 
 ## Non-Negotiable Rules
@@ -50,17 +50,14 @@ skills/               Agent Skill SKILL.md files
 ## Commands
 
 ```bash
-# Run tests (no live API)
-PYTHONPATH=src pytest tests/unit tests/property tests/integration tests/contract tests/mcp_e2e tests/security -v
+# Setup (pinned, NFR-SE-6)
+pip install -r requirements.lock && pip install -e . --no-deps
 
-# Run with coverage
-PYTHONPATH=src pytest --cov=cerebra --cov-report=term-missing tests/unit tests/property
+# Full gate (run before every commit; same as CI)
+ruff check . && ruff format --check . && mypy && python -m pytest tests/ --cov=cerebra -q
 
-# Lint
-ruff check src/ tests/
-
-# Format
-ruff format src/ tests/
+# Regenerate the lockfile after changing dependencies in pyproject.toml
+uv pip compile pyproject.toml --extra dev --universal --python-version 3.11 -o requirements.lock
 ```
 
 ## SRS Quick Reference

@@ -185,9 +185,7 @@ class TestPartialCreationRecovery:
             config=config,
         )
 
-        result = asyncio.get_event_loop().run_until_complete(
-            create_uc.create(pid, digest, "private")
-        )
+        result = asyncio.run(create_uc.create(pid, digest, "private"))
 
         assert result["status"] == "PARTIAL"
         assert "vid0002ABCDE" in result["failed_video_ids"]

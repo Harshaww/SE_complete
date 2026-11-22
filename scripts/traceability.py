@@ -52,14 +52,17 @@ INSPECTION: dict[str, tuple[str, str]] = {
     "NFR-MA-3": ("docs/adr/ADR-A.md", "Every ADR carries a 'Brain notes:' citation"),
     "NFR-PF-3": (
         "tests/integration/test_live_readonly.py",
-        "Latency of real calls: manual live smoke run",
+        "Latency of real calls: measured manually, docs/testing/live-smoke-runbook.md",
     ),
     "NFR-PF-4": (
         "tests/integration/test_live_write.py",
-        "Latency of real calls: manual live smoke run",
+        "Latency of real calls: measured manually, docs/testing/live-smoke-runbook.md",
     ),
     "NFR-PO-1": ("docs/user-guide.md", "Pure-Python dependencies; documented set-up"),
-    "NFR-SE-6": (".github/workflows/ci.yml", "pip-audit step; mcp pinned <2 in pyproject.toml"),
+    "NFR-SE-6": (
+        ".github/workflows/ci.yml",
+        "Dependencies pinned in requirements.lock (CI installs from it); pip-audit on it",
+    ),
     "NFR-SE-7": (
         "src/cerebra/mcp_server.py",
         "stdio transport only; no HTTP transport is provided",
