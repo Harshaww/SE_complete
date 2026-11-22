@@ -58,7 +58,8 @@ If a call errors (auth, budget), the message names the cause; fix env and rerun.
 |------|-------|----------|------------|--------|
 | 2026-11-22 | read-only suite | 4.25 s total | ~105 general | 7 passed |
 | 2026-11-22 | FR-1 uncached | 1.82 s | 105 general, 1 search | PASS (NFR-PF-3 < 10 s) |
-| 2026-11-22 | FR-4 proposal | N/A | 1 general | BLOCKED: throwaway account has no YouTube channel. Re-run with channel-enabled account. |
+| 2026-11-22 | FR-4 proposal (account_id stubbed) | 1.25 s | 101 general, 1 search | PARTIAL PASS (NFR-PF-4 < 20 s): 8 items; get_account_id/channels.list skipped via injected stub, no channel on throwaway account |
+| 2026-11-22 | FR-4 proposal (full) | pending | - | BLOCKED: throwaway account has no YouTube channel. Re-run unstubbed once channel exists. |
 
 ## 6. Redact before sharing anything
     python scripts/redact_results.py live-results.xml write-results.xml
