@@ -1,10 +1,10 @@
 ---
 title: ISO 8601 durations from the YouTube API
 type: research-note
-status: draft
+status: reviewed
 source: https://developers.google.com/youtube/v3/docs/videos (contentDetails.duration); ISO 8601
 accessed: 2026-11-22
-author: unassigned
+author: SegmentationFault
 drafted-with: ai, see [[ai-session-2026-11-22-brain-drafts]]
 requirements: [FR-4.2, FR-4.3, FR-3.5, NFR-US-2, TR-1]
 ---

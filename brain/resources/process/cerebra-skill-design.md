@@ -1,10 +1,10 @@
 ---
 title: Agent Skills format and the video-to-playlist design
 type: research-note
-status: draft
+status: reviewed
 source: https://agentskills.io; SRS sections 4.6 and 4.7
 accessed: 2026-11-22
-author: unassigned
+author: SegmentationFault
 drafted-with: ai, see [[ai-session-2026-11-22-brain-drafts]]
 requirements: [SK-1.1, SK-1.2, SK-1.3, SK-1.5, SK-6.1, CON-8]
 ---

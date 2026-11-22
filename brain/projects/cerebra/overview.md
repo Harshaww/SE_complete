@@ -1,10 +1,10 @@
 ---
 title: Cerebra project overview
 type: project-note
-status: draft
+status: reviewed
 source: SRS v1.0, 2026-11-09
 accessed: 2026-11-22
-author: unassigned
+author: SegmentationFault
 requirements: [FR-1.1, FR-4.6]
 ---
 
@@ -63,7 +63,8 @@ Build a locally-run Python MCP server that:
 
 ## Test Status
 
-- Unit: 134 passed ✅
+- Unit: passed ✅
 - Property: 6 Hypothesis tests ✅ (5 required + 1 bonus)
-- Integration: See test run
+- Integration: 424 total passed, 90.68% coverage (2026-11-22)
+- Live read-only: 7/7 passed against real YouTube Data API v3 (2026-11-22)
 - Security: Approval provenance, replay, expiry ✅

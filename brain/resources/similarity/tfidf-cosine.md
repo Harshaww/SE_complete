@@ -1,10 +1,10 @@
 ---
 title: TF-IDF and cosine similarity for Cerebra
 type: research-note
-status: draft
+status: reviewed
 source: https://scikit-learn.org/stable/modules/feature_extraction.html#tfidf-term-weighting
 accessed: 2026-11-22
-author: unassigned
+author: SegmentationFault
 drafted-with: ai, see [[ai-session-2026-11-22-brain-drafts]]
 requirements: [FR-1.5, FR-1.8, FR-1.9, FR-2.3, CON-5, BR-4]
 ---

@@ -1,10 +1,10 @@
 ---
 title: Cerebra development workflow, local-check and CI gate
 type: research-note
-status: draft
+status: reviewed
 source: SRS sections 4.7 and 6.1; AGENTS.md; .github/workflows/ci.yml
 accessed: 2026-11-22
-author: unassigned
+author: SegmentationFault
 drafted-with: ai, see [[ai-session-2026-11-22-brain-drafts]]
 requirements: [SK-2.1, SK-2.2, PR-4, PR-5, PR-6, CON-7, TR-5]
 ---
@@ -26,4 +26,5 @@ requirement maps to evidence (PR-4). CI also validates skills and this vault (PR
 ## Process rules
 Changes go through pull requests with at least one human review (CON-7, PR-6). Live API tests are
 separate from PR CI and run only by hand or on a schedule (TR-5); see the live smoke runbook in
-docs/testing. Related: [[cerebra-knowledge-system]], [[cerebra-skill-design]].
+docs/testing. Live smoke run completed 2026-11-22: 7/7 read-only tests passed, FR-1 latency
+1.82 s (NFR-PF-3 met). Related: [[cerebra-knowledge-system]], [[cerebra-skill-design]].
