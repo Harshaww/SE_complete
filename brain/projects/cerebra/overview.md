@@ -1,3 +1,13 @@
+---
+title: Cerebra project overview
+type: project-note
+status: draft
+source: SRS v1.0, 2026-11-09
+accessed: 2026-11-22
+author: unassigned
+requirements: [FR-1.1, FR-4.6]
+---
+
 # Cerebra Project Overview
 
 **Project:** Cerebra – YouTube Video Intelligence MCP Server  

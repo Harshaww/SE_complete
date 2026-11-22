@@ -1,3 +1,13 @@
+---
+title: YouTube Data API v3 OAuth scopes
+type: research-note
+status: draft
+source: https://developers.google.com/youtube/v3/guides/auth/installed-apps
+accessed: 2026-11-22
+author: unassigned
+requirements: [FR-5.1, NFR-SE-1, CON-3]
+---
+
 # YouTube Data API v3 OAuth Scopes Reference
 
 **Last verified:** 2026-11-09  

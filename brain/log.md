@@ -1,5 +1,12 @@
 # Development Log
 
+## 2026-11-22
+
+### brain-ingest (AI-assisted drafts, review pending)
+- Added 10 research notes and 1 ai-session note (see [[ai-session-2026-11-22-brain-drafts]]).
+- Added frontmatter to the 3 existing notes.
+- Created the 3 notes cited by skills (SK-6.1): cerebra-knowledge-system, cerebra-skill-design, cerebra-dev-workflow.
+
 ## 2026-11-20
 
 ### Unit Tests: 134 passed ✅

@@ -40,3 +40,13 @@
 
 - TBD-11: Production OAuth app verification (university project — may remain in Testing mode)
 - TBD-4: Re-verify quota costs at implementation time (cite official page)
+
+---
+
+## Research Notes (PR-10)
+
+- Similarity: [[tfidf-cosine]]
+- YouTube API: [[quota-notes]], [[oauth-scopes]], [[videos-list-metadata]], [[iso8601-duration]], [[playlist-writes]], [[api-errors-and-retry]]
+- MCP and security: [[mcp-tools-resources-stdio]], [[prompt-injection-defence]]
+- Process: [[cerebra-knowledge-system]], [[cerebra-skill-design]], [[cerebra-dev-workflow]]
+- AI sessions: [[ai-session-2026-11-22-brain-drafts]]

@@ -1,3 +1,13 @@
+---
+title: YouTube API v3 quota notes
+type: research-note
+status: draft
+source: https://developers.google.com/youtube/v3/getting-started#quota
+accessed: 2026-11-22
+author: unassigned
+requirements: [FR-5.6, FR-5.7, FR-5.8, NFR-QU-1]
+---
+
 # YouTube API v3 Quota Notes
 
 **Last verified:** 2026-11-09  
