@@ -82,5 +82,22 @@ Estimates are exact because we count each `videos.list` call = 1 unit. In live m
 | Gap | Impact | Mitigation |
 |-----|--------|-----------|
 | No benchmark suite | Cannot track regressions | Plan: add `pytest-benchmark` in Phase 5 |
-| Live API latency not measured | Unknown | Measured in `live-api-readonly` scheduled workflow |
+| FR-4 live latency unmeasured | Unknown | Throwaway account has no YouTube channel; re-run with channel-enabled account |
 | No async concurrency test | Unknown | Concurrency tests planned for Phase 5 |
+
+---
+
+## Live API Measurements (2026-11-22)
+
+**Environment:** macOS, Python 3.12, YouTube Data API v3 enabled (project 324193610707).
+**Account:** throwaway OAuth test user (read-only scope, Testing consent screen).
+**Tool:** `time.perf_counter()` around use-case calls; live adapter used.
+
+| Check | NFR target | Measured | Quota used | Status |
+|-------|-----------|----------|------------|--------|
+| Read-only suite (7 tests) | -- | 4.25 s total | ~105 general, 1 search | PASS |
+| FR-1 `find_similar_videos` uncached | < 10 s (NFR-PF-3) | **1.82 s** | 105 general, 1 search | PASS |
+| FR-4 `propose_playlist` | < 20 s (NFR-PF-4) | N/A | 1 general | BLOCKED -- throwaway account has no YouTube channel; NO_YOUTUBE_CHANNEL raised before search phase. Re-run with channel-enabled account. |
+
+FR-1 at 1.82 s is well within the 10 s NFR-PF-3 target. Measured quota cost of 105 units
+aligns with integration test expectations (~104 units for a 10-result find_similar call, ADR-F note 11).
