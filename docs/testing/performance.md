@@ -82,7 +82,6 @@ Estimates are exact because we count each `videos.list` call = 1 unit. In live m
 | Gap | Impact | Mitigation |
 |-----|--------|-----------|
 | No benchmark suite | Cannot track regressions | Plan: add `pytest-benchmark` in Phase 5 |
-| FR-4 full live latency unmeasured (partial 1.25 s, account_id stubbed) | Low: only one channels.list call missing | Throwaway account has no YouTube channel; re-run with channel-enabled account |
 | No async concurrency test | Unknown | Concurrency tests planned for Phase 5 |
 
 ---
@@ -98,7 +97,7 @@ Estimates are exact because we count each `videos.list` call = 1 unit. In live m
 | Read-only suite (7 tests) | -- | 4.25 s total | ~105 general, 1 search | PASS |
 | FR-1 `find_similar_videos` uncached | < 10 s (NFR-PF-3) | **1.82 s** | 105 general, 1 search | PASS |
 | FR-4 `propose_playlist` (account_id stubbed) | < 20 s (NFR-PF-4) | **1.25 s** | 101 general, 1 search | PARTIAL -- real search/fetch/score/pack on live API; `channels.list` (get_account_id) stubbed because throwaway account has no channel. 8 items proposed. Full end-to-end run pending channel. |
-| FR-4 `propose_playlist` | < 20 s (NFR-PF-4) | pending | 1 general | FULL RUN BLOCKED -- throwaway account has no YouTube channel; NO_YOUTUBE_CHANNEL raised before search phase. Re-run with channel-enabled account. |
+| FR-4 `propose_playlist` (full, unstubbed) | < 20 s (NFR-PF-4) | **1.2 s** | 102 general, 1 search | PASS -- full end-to-end on live API incl. `channels.list` (get_account_id); throwaway account now has a channel. |
 
 FR-1 at 1.82 s is well within the 10 s NFR-PF-3 target. Measured quota cost of 105 units
 aligns with integration test expectations (~104 units for a 10-result find_similar call, ADR-F note 11).
