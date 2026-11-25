@@ -59,7 +59,7 @@ In Phase 2–3 (fixture adapter), account identity is a stub `"fixture_user"`. I
 For stdio transport, **all human-readable prompts go to stderr**, never stdout (which carries MCP JSON). An optional approval CLI is provided:
 
 ```
-python -m cerebra.cli approve <proposal_id>
+cerebra-cli approve <proposal_id>
 ```
 
 This reads the proposal from SQLite, displays it to the terminal (stderr/tty), and writes an `approval_token` to SQLite that `create_playlist` checks. This channel is used when the AI client does not support interactive confirmation.
@@ -70,7 +70,7 @@ This reads the proposal from SQLite, displays it to the terminal (stderr/tty), a
 |-------------|------------|-------|
 | Claude Desktop (stdio) | Untrusted relay | User types confirmation_digest from proposal output |
 | Automated agent loop | Untrusted | Digest binding prevents auto-approval |
-| `cerebra.cli approve` | Trusted (local) | Runs in user's terminal, reads tty |
+| `cerebra-cli approve` | Trusted (local) | Runs in user's terminal, reads tty |
 
 The server **fails closed** when a client calls `create_playlist` without a valid digest: `APPROVAL_REJECTED` error, no write occurs.
 

@@ -1,7 +1,7 @@
 # AI Test Review — Predict-Before-Run Table
 
 **Purpose:** For each test file, record the predicted outcome BEFORE running the test, then the actual outcome.  
-**Reference:** SE Lab Testing requirements, Cerebra SRS, NFR-TE-3
+**Reference:** SE Lab Testing requirements, Cerebra SRS, NFR-TE-1, NFR-TE-2
 
 ---
 

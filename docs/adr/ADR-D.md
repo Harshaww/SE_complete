@@ -61,12 +61,12 @@ The `TokenStore` port in `ports/interfaces.py` abstracts storage. The concrete i
 Google OAuth refresh tokens expire after **7 days in Testing/unverified app mode** (CON-3). Mitigations:
 
 - `oauth_manager.ensure_valid_token()` is called before every API request
-- If refresh fails → `TokenExpiredError` → user is prompted to re-authenticate via `cerebra.cli login`
+- If refresh fails → `TokenExpiredError` (surfaced to clients as `AUTH_EXPIRED`, FR-5.4) → user is prompted to re-authenticate via `cerebra-cli login`
 - Re-auth does **not** invalidate pending proposals (proposals survive; quota reservations are paused)
 
 ### 5. Revocation (FR-5.5)
 
-`cerebra.cli revoke` calls `oauth2.revoke` endpoint and deletes the local token. After revocation, all tools requiring auth return `NOT_AUTHENTICATED` until `cerebra.cli login` is re-run.
+`cerebra-cli logout` calls `oauth2.revoke` endpoint and deletes the local token. After revocation, all tools requiring auth return `AUTH_REQUIRED` until `cerebra-cli login` is re-run.
 
 ---
 

@@ -29,7 +29,7 @@ Per NFR-SA-2, only `playlists.insert` and `playlistItems.insert` are ever called
 PROPOSED ──(confirmed + digest ok)──→ CONFIRMED
 CONFIRMED ──(first write attempted)──→ PARTIAL (persist playlist_id)
 PARTIAL ──(all items inserted)──→ CREATED
-PARTIAL ──(unrecoverable error)──→ FAILED
+(PARTIAL -> FAILED removed 2026-11-22, see ADR-F item 10: PARTIAL only goes to CREATED, per SRS Appendix B.3)
 
 PROPOSED ──(expired)──→ EXPIRED
 PROPOSED ──(cancelled)──→ CANCELLED
@@ -90,7 +90,7 @@ If `playlists.insert` or `playlistItems.insert` returns HTTP 5xx / timeout:
 - Quota assumed consumed (ADR-B §5)
 - State remains `PARTIAL`
 - Error logged to `AuditLog` with `ambiguous=True`
-- Next startup or manual `cerebra.cli recover <proposal_id>` triggers reconciliation
+- Next startup or manual `cerebra-cli recover <proposal_id>` triggers reconciliation
 
 ---
 

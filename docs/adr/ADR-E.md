@@ -65,7 +65,7 @@ Rationale: MCP stdio transport is the standard for local desktop AI assistants (
 - Max cache size: 1,000 entries (LRU eviction)
 - Cache is **per-account**: keys include account hash to prevent cross-account data leakage
 - Cache is **not** shared across OS users
-- Manual clear: `cerebra.cli clear-cache`
+- Manual clear: `cerebra-cli clear-cache`
 
 ### TBD-7: Duration Bands
 
