@@ -4,7 +4,7 @@
 **Version:** 1.0  
 **Date:** 2026-11-09  
 **Team:** SegmentationFault  
-**SRS refs:** NFR-TE-1 through NFR-TE-5, TR-1 through TR-5
+**SRS refs:** NFR-TE-1 and NFR-TE-2, TR-1 through TR-5
 
 ---
 
@@ -12,7 +12,7 @@
 
 | Goal | Target | SRS ref |
 |------|--------|---------|
-| Unit test coverage ≥80% on core logic | ≥80% line coverage | NFR-TE-3 |
+| Unit test coverage ≥80% on core logic | ≥80% line coverage | NFR-TE-2 |
 | All CI tests use fixture adapter only | Zero live API calls in CI | NFR-TE-1, TR-5 |
 | Property tests (Lab Part A) | 5 Hypothesis tests | Lab requirement |
 | Deterministic ranking | Golden snapshot test passes | FR-1.9 |

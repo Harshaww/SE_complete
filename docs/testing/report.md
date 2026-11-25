@@ -12,7 +12,7 @@
 
 This report documents the property-based testing suite implemented using **Hypothesis** for the Cerebra MCP server, per the Software Engineering Lab requirements (Part A). A total of **8 property-based tests** (exceeding the required 5) were constructed, covering critical invariant properties across duration parsing, deterministic scoring, bounded weighted scores, knapsack playlist constraint solving, quota conservation, state machine transitions, and reference normalization.
 
-Additionally, a comprehensive automated test suite spanning unit, property, contract, integration, and security layers achieved **81.82% overall line coverage** across `src/cerebra`, satisfying the ≥80% quality gate (NFR-TE-3).
+Additionally, a comprehensive automated test suite spanning unit, property, contract, integration, and security layers achieved **81.82% overall line coverage** across `src/cerebra`, satisfying the ≥80% quality gate (NFR-TE-2).
 
 ---
 
@@ -70,7 +70,7 @@ All property tests are implemented in `tests/property/test_properties.py`.
 
 Full test suite execution:
 - **Total Tests:** 184 passing tests across unit, property, integration, contract, mcp_e2e, and security suites.
-- **Overall Line Coverage:** **81.82%** (exceeds the 80% threshold required by NFR-TE-3).
+- **Overall Line Coverage:** **81.82%** (exceeds the 80% threshold required by NFR-TE-2).
 
 ### Module Coverage Breakdown
 
