@@ -110,3 +110,17 @@ Full test suite execution:
 1. **Live YouTube API Responses:** Under NFR-TE-1 and TR-5, automated tests run strictly against fixture adapters. Unannounced breaking changes in YouTube's live JSON responses can only be caught by contract tests in scheduled/manual workflows.
 2. **True Concurrency Stresses:** While `QuotaLedger` and SQLite stores use thread locks, extreme high-concurrency race conditions (e.g. hundreds of simultaneous write requests) require distributed stress testing beyond in-process test fixtures.
 3. **Live Network Timeouts & Partitions:** Simulated clock advances test logical timeout transitions, but transient TCP reset or SSL renegotiation failures require network fault injection.
+
+---
+
+## Addendum (2026-11-25): current figures
+
+The figures above are the 2026-11-20 snapshot and are kept as written. State of `main` on 2026-11-25:
+
+- Tests: 424 passed, 8 deselected (7 live_readonly + 1 live_write, excluded by default so CI never calls the live API).
+- Coverage: 90.68% (2565 statements, 185 missed, 644 branches, 80 partial); gate is 80% (NFR-TE-2).
+- Property tests: 8 Hypothesis tests in tests/property/test_properties.py.
+- Traceability: 136 requirements, 380 rows (scripts/traceability.py).
+- Lowest-covered module: application/find_similar.py at 60%.
+- Live runs: read-only suite 7 passed, write test passed, FR-1 uncached 1.82 s and FR-4 proposal 1.2 s (see docs/testing/performance.md).
+

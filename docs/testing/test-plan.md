@@ -4,7 +4,7 @@
 **Version:** 1.0  
 **Date:** 2026-11-09  
 **Team:** SegmentationFault  
-**SRS refs:** NFR-TE-1 and NFR-TE-2, TR-1 through TR-5
+**SRS refs:** NFR-TE-1 and NFR-TE-2, TR-1 through TR-9
 
 ---
 
@@ -14,7 +14,7 @@
 |------|--------|---------|
 | Unit test coverage ≥80% on core logic | ≥80% line coverage | NFR-TE-2 |
 | All CI tests use fixture adapter only | Zero live API calls in CI | NFR-TE-1, TR-5 |
-| Property tests (Lab Part A) | 5 Hypothesis tests | Lab requirement |
+| Property tests (Lab Part A) | 8 Hypothesis tests (5 required) | Lab requirement |
 | Deterministic ranking | Golden snapshot test passes | FR-1.9 |
 | Security tests | Approval provenance, replay, expiry | ADR-A |
 
@@ -49,11 +49,14 @@
 
 | Test | Property verified | SRS ref |
 |------|-----------------|---------|
-| `test_parse_duration_roundtrip` | `seconds_to_iso8601(parse_duration(s)) == s` | FR-1.3 |
-| `test_rank_videos_deterministic` | `rank_videos(seed, candidates)` is stable across two calls | FR-1.9 |
-| `test_rank_videos_bounded` | All scores ∈ [0.0, 1.0] | FR-1.5 |
-| `test_quota_reserve_release_idempotent` | `reserve + release` leaves budget unchanged | FR-5.8 |
-| `test_normalise_video_roundtrip` | Valid 11-char IDs always normalise to themselves | FR-1.1 |
+| `test_round_trip_seconds_iso8601` | `seconds_to_iso8601(parse_duration(s)) == s` | FR-1.3 |
+| `test_ranking_order_does_not_matter` | Ranking is independent of candidate input order | FR-1.9 |
+| `test_cosine_structure_and_weights` | Cosine similarity and scoring weights keep their structural invariants | FR-1.5 |
+| `test_weighted_score_in_range` | All weighted scores stay in [0.0, 1.0] | FR-1.5 |
+| `test_playlist_solver_structure` | Solver output satisfies the duration constraints | FR-4.2, FR-4.3 |
+| `test_quota_ledger_recurrence` | Reserve/release sequences keep the ledger consistent with its budget | FR-5.8 |
+| `test_state_machine_recurrence` | Random event sequences follow only allowed transitions | SRS Appendix B.3 |
+| `test_extra_normalise_idempotence` | Normalising an already-normalised ID changes nothing | FR-1.1 |
 
 ### Layer 3 — Integration Tests (`tests/integration/`)
 
@@ -111,10 +114,10 @@ Covers all 5 use cases: `find_similar_videos`, `find_similar_channels`, `recomme
 |------|-----------|-----------------|
 | Fast gate (every push) | `tests/unit` + `tests/property` | Yes |
 | Full gate (every PR) | All suites except `live-api` | Yes |
-| Coverage gate | `--cov=cerebra` on unit + property | ≥80% line coverage |
+| Coverage gate | `--cov=cerebra` on the full suite (`tests/`) | ≥80% line coverage |
 | Security gate | `tests/security` | Yes |
-| Live readonly (scheduled daily) | `tests/contract` on live adapter | No (advisory) |
-| Live write (manual only) | `tests/mcp_e2e` on live adapter | No (manual sign-off) |
+| Live readonly (scheduled daily) | `tests/integration -m live_readonly` | No (advisory) |
+| Live write (manual only) | `tests/integration -m live_write` | No (manual sign-off) |
 
 ---
 
@@ -136,3 +139,19 @@ Covers all 5 use cases: `find_similar_videos`, `find_similar_channels`, `recomme
 | TF-IDF scoring (100 candidates) | < 200ms | Unit test timing |
 
 See `docs/testing/performance.md` for measured values.
+
+---
+
+## 7. TR Coverage Map
+
+| TR | Evidence (see docs/traceability.csv) |
+|----|--------------------------------------|
+| TR-1 | tests/unit: test_duration, test_normalise, test_quota, test_scoring |
+| TR-2 | tests/integration: test_integration (TestProposalStoreIntegration), test_live_adapter (TestErrorMapping, TestReadBehaviour) |
+| TR-3 | tests/mcp_e2e/test_mcp_e2e.py (find_similar, recommend, analyse, propose, uniform errors) |
+| TR-4 | test_live_adapter (TestErrorMapping, TestWritesNeverRetried), test_mcp_e2e (TestUniformErrors), tests/unit/test_auth.py (TestTestingModeExpiry), test_duration, test_normalise |
+| TR-5 | tests/integration/test_srs_requirements.py (TestCiNeverCallsLiveApi); live tests are excluded by default through pytest addopts markers |
+| TR-6 | test_live_adapter (TestQuotaBeforeEveryCall); test_live_readonly (TestLiveBudgetGuard, live, manual) |
+| TR-7 | tests/security (test_injection, test_security), tests/unit/test_auth.py (TestScopes), tests/unit/test_validation.py (TestSecurityValidation) |
+| TR-8 | Inspection: skills/local-check/SKILL.md, results recorded in docs/testing/ |
+| TR-9 | Inspection: this plan; defects get regression tests (example: tests/unit/test_error_traceback.py) |
